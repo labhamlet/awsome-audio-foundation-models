@@ -205,3 +205,13 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+SSAM/ssam_base_200_16x4_4x256_fp16_r1-20250505T133454Z-001.zip
+SSAM/ssam_base_200_16x4_4x256_fp16_r1/checkpoints/checkpoint-99.pth
+Spatial-AST/finetuned.pth
+AudioMAE/mae.tar.gz
+AudioMAE/pretrained.pth
+SSAST/pretrained_model/SSAST-Base-Frame-400.pth
+SSAST/pretrained_model/SSAST-Base-Patch-400.pth
+BEATs/BEATs_iter3.pt
+MWMAE/mwmae_base_200_4x16_8x128_default_bfloat16_run1/checkpoint_198400
