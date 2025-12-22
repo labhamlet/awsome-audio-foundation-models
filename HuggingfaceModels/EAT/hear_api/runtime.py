@@ -7,10 +7,8 @@ from transformers import AutoModel, AutoFeatureExtractor
 class RuntimeEAT(torch.nn.Module):
     def __init__(self, 
                  model_size, 
-                 mode,
                  **kwargs) -> None:
         super().__init__()
-        self.mode = mode
 
         if model_size == "base":
             self.model = AutoModel.from_pretrained("worstchan/EAT-base_epoch30_pretrain", trust_remote_code=True)
@@ -42,9 +40,11 @@ class RuntimeEAT(torch.nn.Module):
         return x
 
     def get_scene_embeddings(self, audio):
-        embeddings, _ = self.get_timestamp_embeddings(audio)  
-        # This takes the mean embedding across the scene! 
-        embeddings = torch.mean(embeddings, dim=1)
+        features = self.audio2feats(audio)
+        self.model.eval()
+        with torch.no_grad():
+            embeddings = self.model(features)
+            embeddings = embeddings[:, [0]]     # remove CLS token
         return embeddings
     
     def get_timestamp_embeddings(self, audio):
@@ -52,12 +52,7 @@ class RuntimeEAT(torch.nn.Module):
         self.model.eval()
         with torch.no_grad():
             embeddings = self.model(features)
-            if self.mode == "utterance":
-                embeddings = embeddings[:, [0]]     # remove CLS token
-            elif self.mode == "frame":
-                embeddings = embeddings[:, 1:, :]     # remove CLS token
-            else:
-                raise Exception("Unknown mode")
+            embeddings = embeddings[:, 1:, :]     # remove CLS token
                 
         # Get the timestamps from the audio, embeddings and sample rate.
         ts = get_timestamps(self.sample_rate, audio.shape[0], audio.shape[-1], embeddings)
