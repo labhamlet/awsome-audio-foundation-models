@@ -23,7 +23,7 @@ class RuntimeBYOLS(torch.nn.Module):
             raise Exception("Wrong model name")
         self.frame_duration = 1000 #ms
         self.hop_size = 50 #ms
-        self.embedding_size = 768
+        self.embedding_size = 2048
         self.scene_embedding_size = self.embedding_size
         self.timestamp_embedding_size = self.embedding_size
         self.sample_rate = self.model.sample_rate
@@ -42,7 +42,6 @@ class RuntimeBYOLS(torch.nn.Module):
 
     def get_scene_embeddings(self, audio):
         features = self.audio2feats(audio)
-        print(features.shape)
         self.model.eval()
         with torch.no_grad():
             embeddings = serab_byols.get_scene_embeddings(features, self.model)
