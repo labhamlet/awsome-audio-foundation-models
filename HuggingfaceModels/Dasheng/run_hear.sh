@@ -49,7 +49,7 @@ task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
 task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}
 
 model_name=hear_configs.dasheng
-model_size=x-large
+model_size=base
 model_options="{\"model_size\": \"$model_size\"}"
 
 python3 -m heareval.embeddings.runner "$model_name" --tasks-dir $task_dir --task "$task_name" --embeddings-dir $embeddings_dir --model-options "$model_options"
