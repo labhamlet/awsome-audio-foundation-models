@@ -14,7 +14,7 @@ class FeatureExtractor(torch.nn.Module):
             waveforms: List of audio waveform tensors
             
         Returns:
-            Batch of audio features
+            Batch of audio features, padded to match the longest sequence
         """
         features = []
         
@@ -36,7 +36,7 @@ class FeatureExtractor(torch.nn.Module):
 
             features.append(audio)
         
-        return features
+        return torch.nn.utils.rnn.pad_sequence(features, batch_first=True)[:, 0, :]
 
     def forward(self, x):
         x = self._wav2feature(x).cuda()
