@@ -6,21 +6,21 @@
 #SBATCH --cpus-per-task=18
 #SBATCH --exclude=gcn118
 #SBATCH --time=02:00:00
-#SBATCH --output=hear/slurm_output_%A_%a.out
+#SBATCH --output=nathear/slurm_output_%A_%a.out
 #SBATCH --array=0-10
 
 task_dirs=(
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1261/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks)
+/projects/0/prjs1338/tasks_noisy_ambisonics
+/projects/0/prjs1261/tasks_noisy_ambisonics
+/projects/0/prjs1261/tasks_noisy_ambisonics
+/projects/0/prjs1338/tasks_noisy_ambisonics
+/projects/0/prjs1338/tasks_noisy_ambisonics
+/projects/0/prjs1338/tasks_noisy_ambisonics
+/projects/0/prjs1338/tasks_noisy_ambisonics
+/projects/0/prjs1338/tasks_noisy_ambisonics
+/projects/0/prjs1338/tasks_noisy_ambisonics
+/projects/0/prjs1338/tasks_noisy_ambisonics
+/projects/0/prjs1338/tasks_noisy_ambisonics)
 
 task_names=(beijing_opera-v1.0-hear2021-full
 dcase2016_task2-hear2021-full
