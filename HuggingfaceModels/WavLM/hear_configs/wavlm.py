@@ -1,5 +1,4 @@
-from hear_api.wavLM import RuntimeWavLM
-import torch
+from hear_api.runtime import RuntimeWavLM
 
 def load_model(*args, **kwargs):
     model_size = kwargs.get("model_size", "base-plus")

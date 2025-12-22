@@ -31,7 +31,8 @@ import torchaudio
 # For now need to import this, otherwise we wont find the models.
 # Later publish it to pypi.
 import sys 
-sys.path.append("../../../../HuBERT")
+import os
+sys.path.append(os.path.abspath("../../HuBERT"))
 from importlib import import_module
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
