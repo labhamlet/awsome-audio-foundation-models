@@ -1,0 +1,17 @@
+pandas
+numpy
+matplotlib
+torch
+torchaudio
+torchvision
+tensorboard
+fire
+tqdm
+scikit-learn
+librosa
+nnAudio
+timm==0.4.5
+transformers
+einops
+easydict
+torchlibrosa
