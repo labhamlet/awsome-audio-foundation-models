@@ -217,3 +217,4 @@ BEATs/BEATs_iter3.pt
 MWMAE/mwmae_base_200_4x16_8x128_default_bfloat16_run1/checkpoint_198400
 *.out
 *.pth
+*.ckpt
