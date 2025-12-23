@@ -31,7 +31,7 @@ import torchaudio
 # For now need to import this, otherwise we wont find the models.
 # Later publish it to pypi.
 import sys 
-sys.path.append("../../ATST-Clip")
+sys.path.append("../../../../ATST-Clip")
 from importlib import import_module
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
