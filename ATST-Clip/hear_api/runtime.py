@@ -94,7 +94,6 @@ class RuntimeATSTClip(torch.nn.Module):
     def get_scene_embeddings(self, audio):
         mel_specs = self.audio2feats(audio)
         embeddings = self.extract_embeddings(audio, mel_specs)
-        print(embeddings.shape)
         return embeddings
     
     def get_timestamp_embeddings(self, audio):
