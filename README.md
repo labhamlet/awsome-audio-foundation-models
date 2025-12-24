@@ -17,6 +17,7 @@ We have collected 23 recent audio foundation models from the existing literature
 | **Latent Space Reconstruction** | | | | | |
 | | | | | |
 | BYOL-A | TASLP 2023 | Mel Spectrogram| 5.4k | | |
+| EAT | IJCAI 2024 | Mel Spectrogram | 5.3k | | | 
 | M2D    | TASLP 2024    |Mel Spectrogram | 5.4k | | |
 | USAD | ArXiv | Mel Spectrogram | 161k | | |
 | ATST-Clip | ICASSP 2024 | Mel Spectrogram | 5.4k | | |
@@ -39,6 +40,7 @@ We have collected 23 recent audio foundation models from the existing literature
 | | | | | |
 | PASST    | INTERSPEECH 2022 | Mel Spectrogram | 5.4k | |  |
 | Spatial-AST    | ICML 2024  | Mel Spectrogram + IPD | 5.4k | | |
+| AST    | INTERSPEECH 2021 | Mel Spectrogram | 5.4k | | |
 
 # Results on HEAR Benchmark
 
