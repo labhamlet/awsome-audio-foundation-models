@@ -1,6 +1,7 @@
 # awsome-audio-foundation-models
 This repo contains benchmarking code for recent audio foundation models on HEAR and Nat-HEAR datasets.
-We have collected 23 recent audio foundation models from the existing literature. Here are all the models we managed to collect, along with open-source weights and implementations.
+We have collected 25 recent audio foundation models from the existing literature. Here are all the models we collected, along with open-source weights and implementations. 
+For each model, we provide inference code that is HEAR- and Nat-HEAR-compatible, and the Python environments with the required packages already installed.
 
 ## Models
 
