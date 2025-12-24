@@ -53,6 +53,8 @@ class RuntimeGRAMAmbisonics(torch.nn.Module):
         audio = self.audio2feats(audio)
         self.model.eval()
         with torch.no_grad():
+            if audio.ndim != 4:
+                audio = audio.unsqueeze(0)
             embeddings = self.model(audio, strategy="raw")
         # Get the timestamps from the audio, embeddings and sample rate.
         ts = get_timestamps(self.sample_rate, audio.shape[0], audio.shape[-1], embeddings)
