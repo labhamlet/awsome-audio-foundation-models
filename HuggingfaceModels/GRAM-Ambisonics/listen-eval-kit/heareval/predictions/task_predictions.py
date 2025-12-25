@@ -800,6 +800,7 @@ def get_events_for_all_files(
 def label_vocab_nlabels(embedding_path: Path) -> Tuple[pd.DataFrame, int]:
     # Reads the label vocab from the labelvocabulary.csv
     label_vocab = pd.read_csv(embedding_path.joinpath("labelvocabulary.csv"))
+    print(label_vocab)
     nlabels = len(label_vocab)
     assert nlabels == label_vocab["idx"].max() + 1
     return (label_vocab, nlabels)

@@ -26,6 +26,7 @@ task_dirs=(
 task_names=(beijing_opera-v1.0-hear2021-full
 dcase2016_task2-hear2021-full
 fsd50k-v1.0-full
+starss2023-v1.0-listen-2025
 esc50-v2.0.0-full
 libricount-v1.0.0-hear2021-full
 speech_commands-v0.0.2-5h

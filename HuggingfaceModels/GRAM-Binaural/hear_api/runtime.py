@@ -50,14 +50,13 @@ class RuntimeGRAMBinaural(torch.nn.Module):
         return embeddings
     
     def get_timestamp_embeddings(self, audio):
-        audio = self.audio2feats(audio)
+        features = self.audio2feats(audio)
         self.model.eval()
         with torch.no_grad():
-            if audio.ndim != 4:
-                audio = audio.unsqueeze(0)
-            embeddings = self.model(audio, strategy="raw")
-        # Get the timestamps from the audio, embeddings and sample rate.
-        ts = get_timestamps(self.sample_rate, audio.shape[0], audio.shape[-1], embeddings)
+            if features.ndim != 4:
+                features = features.unsqueeze(0)
+            embeddings = self.model(features, strategy="raw")
+        ts = get_timestamps(self.sample_rate, audio.shape[0], max(audio.shape), embeddings)
         assert ts.shape[-1] == embeddings.shape[1]
         return embeddings, ts 
 
