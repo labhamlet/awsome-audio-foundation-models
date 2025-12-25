@@ -38,9 +38,9 @@ class RuntimeATSTFrame(torch.nn.Module):
         return x_inp
     
     def get_scene_embeddings(self, audio):
-        audio = self.audio2feats(audio)
-        return get_scene_embedding(audio,self.model)
+        features = self.audio2feats(audio)
+        return get_scene_embedding(features,self.model)
     
     def get_timestamp_embeddings(self, audio):
-        audio = self.audio2feats(audio)
-        return get_timestamp_embedding(audio,self.model)
+        features = self.audio2feats(audio)
+        return get_timestamp_embedding(features,self.model)

@@ -60,7 +60,7 @@ class RuntimeData2Vec(torch.nn.Module):
         return embeddings
     
     def get_timestamp_embeddings(self, audio):
-        audio = self.audio2feats(audio)
+        features = self.audio2feats(audio)
         # Assert audio is of correct shape
         if audio.ndim != 2:
             raise ValueError(
@@ -69,7 +69,7 @@ class RuntimeData2Vec(torch.nn.Module):
 
         self.model.eval()
         with torch.no_grad():
-            embeddings = self.model(audio).last_hidden_state
+            embeddings = self.model(features).last_hidden_state
 
         ts = get_timestamps(self.sample_rate, audio.shape[0], audio.shape[-1], embeddings)
         assert ts.shape[-1] == embeddings.shape[1]

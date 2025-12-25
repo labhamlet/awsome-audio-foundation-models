@@ -46,10 +46,10 @@ class RuntimeWavJEPA(torch.nn.Module):
         return embeddings
     
     def get_timestamp_embeddings(self, audio):
-        audio = self.audio2feats(audio)
+        features = self.audio2feats(audio)
         self.model.eval()
         with torch.no_grad():
-            embeddings, ts = self.model(audio)
+            embeddings, ts = self.model(features)
         return embeddings, ts 
 
 

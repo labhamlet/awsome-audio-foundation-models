@@ -45,16 +45,16 @@ class RuntimeHuBERT(torch.nn.Module):
         return embeddings
     
     def get_timestamp_embeddings(self, audio):
-        audio = self.audio2feats(audio)
+        features = self.audio2feats(audio)
         # Assert audio is of correct shape
-        if audio.ndim != 2:
+        if features.ndim != 2:
             raise ValueError(
                 "audio input tensor must be 2D with shape (n_sounds, num_samples)"
             )
 
         self.model.eval()
         with torch.no_grad():
-            embeddings = self.model(audio)
+            embeddings = self.model(features)
 
         embeddings = embeddings.last_hidden_state
         # Length of the audio in MS

@@ -60,16 +60,16 @@ class RuntimeWav2Vec2(torch.nn.Module):
         return embeddings
     
     def get_timestamp_embeddings(self, audio):
-        audio = self.audio2feats(audio)
+        features = self.audio2feats(audio)
         # Assert audio is of correct shape
-        if audio.ndim != 2:
+        if features.ndim != 2:
             raise ValueError(
                 "audio input tensor must be 2D with shape (n_sounds, num_samples)"
             )
 
         self.model.eval()
         with torch.no_grad():
-            embeddings = self.model(audio).last_hidden_state
+            embeddings = self.model(features).last_hidden_state
 
         # Get the timestamps from the audio, embeddings and sample rate.
         ts = get_timestamps(self.sample_rate, audio.shape[0], audio.shape[-1], embeddings)

@@ -52,12 +52,7 @@ class RuntimeMAE(torch.nn.Module):
     
     def encode(self, lms):
         x = lms
-
-        patch_fbins = self.grid_size[1]
         unit_frames = self.input_size[0]
-
-        embed_d = self.embed_dim
-
         cur_frames = x.shape[1]
         pad_frames = unit_frames - (cur_frames % unit_frames)
         if pad_frames > 0:

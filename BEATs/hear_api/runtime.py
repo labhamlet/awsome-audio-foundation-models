@@ -47,7 +47,6 @@ class RuntimeBEATs(torch.nn.Module):
         ntimestamps = (audio_ms - 5) // 20
         last_center = 12.5 + (ntimestamps - 1) * 20
         timestamps = torch.arange(12.5, last_center + 20, 20)
-        print(embeddings.shape, timestamps.shape)
 
         assert len(timestamps) == ntimestamps
         timestamps = timestamps.expand((embeddings.shape[0], timestamps.shape[0]))

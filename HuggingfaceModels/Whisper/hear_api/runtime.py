@@ -54,11 +54,11 @@ class RuntimeWhisper(torch.nn.Module):
         return embeddings
     
     def get_timestamp_embeddings(self, audio):
-        audio = self.audio2feats(audio)
-        audio = audio.cuda()
+        features = self.audio2feats(audio)
+        features = features.cuda()
         self.model.eval()
         with torch.no_grad():
-            embeddings = self.model(audio, output_hidden_states=True).hidden_states[-1]
+            embeddings = self.model(features, output_hidden_states=True).hidden_states[-1]
 
         # Get the timestamps from the audio, embeddings and sample rate.
         ts = get_timestamps(self.sample_rate, audio.shape[0], audio.shape[-1], embeddings)
