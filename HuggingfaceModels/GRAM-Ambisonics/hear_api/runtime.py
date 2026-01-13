@@ -34,8 +34,7 @@ class RuntimeGRAMAmbisonics(torch.nn.Module):
         return self.feature_extractor(batch_audio)
 
     def audio2feats(self, audio):
-        x = audio.clone()
-        
+        x = self.to_feature(audio)
         # handle coordinate and normalization transformation
         if self.is_real_data:
             transformed_audio = torch.zeros_like(x)
