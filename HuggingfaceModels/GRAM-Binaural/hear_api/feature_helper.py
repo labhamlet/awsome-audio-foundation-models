@@ -25,11 +25,11 @@ class FeatureExtractor(torch.nn.Module):
 
             # Binaural -> Keep as is
             if audio.shape[0] == 2:
-                audio = audio
+                audio = audio.mean(axis = 0).unsqueeze(0)
             
             # Ambisonics -> Take W
             elif audio.shape[0] == 4:
-                audio = audio[0].unsqueeze(0)
+                audio = audio
             
             # Otherwise add the channel dimension
             else:
@@ -37,7 +37,7 @@ class FeatureExtractor(torch.nn.Module):
 
             features.append(audio)
         
-        return torch.nn.utils.rnn.pad_sequence(features, batch_first=True)[:, 0, :]
+        return torch.nn.utils.rnn.pad_sequence(features, batch_first=True)
 
     def forward(self, x):
         x = self._wav2feature(x).cuda()
