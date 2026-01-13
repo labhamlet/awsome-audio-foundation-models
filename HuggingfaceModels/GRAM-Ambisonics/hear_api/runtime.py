@@ -7,7 +7,8 @@ from transformers import AutoModel, AutoFeatureExtractor
 class RuntimeGRAMAmbisonics(torch.nn.Module):
     def __init__(self, 
                  model_size, 
-                 **kwargs) -> None:
+                 is_sn3d,
+                 is_coord_normal) -> None:
         super().__init__()
 
         if model_size == "base":
@@ -24,23 +25,46 @@ class RuntimeGRAMAmbisonics(torch.nn.Module):
         if torch.cuda.is_available():
             self.model.cuda()
         self.model.eval()
+        self.scale_factor = 1.7320508 # sqrt(3), conversion from sn3d to n3d
+        self.is_sn3d = is_sn3d
+        self.is_real_data = is_coord_normal
         self.feature_extractor = FeatureExtractor() 
 
     def to_feature(self, batch_audio):
         return self.feature_extractor(batch_audio)
 
     def audio2feats(self, audio):
-        # This makes sure that audios are one channel.
-        x = self.to_feature(audio)
-        # This resamples/pads etc 
-        audio = self.extractor(
-            x, 
-        )
-        log_mel = audio['input_values']
+        x = audio.clone()
+        
+        # handle coordinate and normalization transformation
+        if self.is_real_data:
+            transformed_audio = torch.zeros_like(x)
 
+            transformed_audio[:, 0, :] = x[:, 0, :]
+            
+            # Ch 1: Model expects UP (Visual Y). 
+            # We take TAU's UP (Ch 2: Z).
+            transformed_audio[:, 1, :] = x[:, 2, :]
+            
+            # Ch 2: Model expects FRONT/DEPTH (Visual Z, which is negative). 
+            # We take TAU's FRONT (Ch 3: X) and invert it (-1).
+            transformed_audio[:, 2, :] = -x[:, 3, :]
+            
+            # Ch 3: Model expects RIGHT (Visual X). 
+            # TAU has LEFT (Ch 1: Y). Right is -Left. So we invert TAU's Y.
+            transformed_audio[:, 3, :] = -x[:, 1, :]
+            x = transformed_audio
+
+        # SN3D to N3D Scaling
+        if self.is_sn3d:
+            x[:, 1:, :] = x[:, 1:, :] * self.scale_factor
+
+        # This resamples/pads etc 
+        audio = self.extractor(x)
+        log_mel = audio['input_values']
         if torch.cuda.is_available():
             log_mel = log_mel.cuda()
-        # Adds a batch dimension for some reason.
+        # Removes the batch dimension
         return log_mel.squeeze(0)
 
     def get_scene_embeddings(self, audio):
