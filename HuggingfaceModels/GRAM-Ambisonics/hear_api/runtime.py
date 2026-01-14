@@ -6,6 +6,8 @@ import torch.nn.functional as F
 from .feature_helper import FeatureExtractor
 from transformers import AutoModel, AutoFeatureExtractor
 from typing import Optional 
+
+
 class RuntimeGRAMAmbisonics(torch.nn.Module):
     def __init__(self, 
                  model_size, 
@@ -78,8 +80,8 @@ class RuntimeGRAMAmbisonics(torch.nn.Module):
     
     def get_timestamp_embeddings(self, audio):
         audio_len = (max(audio.shape) // self.sample_rate) * 1000
-        interpolate_length = audio_len // self.interpolate_to 
         features = self.audio2feats(audio)
+        interpolate_length = None
         self.model.eval()
         with torch.no_grad():
             if features.ndim != 4:
@@ -87,27 +89,26 @@ class RuntimeGRAMAmbisonics(torch.nn.Module):
             embeddings = self.model(features, strategy="raw")
 
             if self.interpolate_to:
+              interpolate_length = audio_len // self.interpolate_to 
               # interpolate expects the 'Time' dimension last
               embeddings = embeddings.transpose(1, 2) 
-              embeddings = F.interpolate(
+              embeddings = F.adaptive_avg_pool1d(
                     embeddings, 
-                    size=interpolate_length,
-                    mode='linear', 
-                    align_corners=False
+                    interpolate_length,
                 )
               embeddings = embeddings.transpose(1, 2)
-
-        ts = get_timestamps(self.sample_rate, audio.shape[0], max(audio.shape), embeddings)
+        
+        ts = self._get_timestamps(audio.shape[0], max(audio.shape), embeddings, 
+                                  is_native_frame_resolution = interpolate_length is None)
         assert ts.shape[-1] == embeddings.shape[1]
         return embeddings, ts 
 
 
-def get_timestamps(sample_rate, B, input_audio_len, x):
-    audio_len = input_audio_len
-    sec = audio_len / sample_rate
-    x_len = x.shape[1]
-    step = 80.0 #It is actually 80.0 instead, but is it? Because fft is calculated from the middle right. 
-    #Hmm, maybe we should instead do the middle. Let's try this with TAU-ov1.
-    ts = torch.tensor([step * i for i in range(x_len)]).unsqueeze(0)
-    ts = ts.repeat(B, 1)
-    return ts
+    def _get_timestamps(self, B, interpolate_length, input_audio_len, x, is_native_frame_resolution):
+        audio_len = input_audio_len
+        sec = audio_len / self.sample_rate
+        x_len = x.shape[1]
+        step = 80.0 if is_native_frame_resolution else self.interpolate_to
+        ts = torch.tensor([step * i for i in range(x_len)]).unsqueeze(0)
+        ts = ts.repeat(B, 1)
+        return ts
