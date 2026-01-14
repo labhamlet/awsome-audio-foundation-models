@@ -1,9 +1,10 @@
 import sys
 sys.path.append('..')
 import torch
+import torch.nn.functional as F
+
 from .feature_helper import FeatureExtractor
 from transformers import AutoModel, AutoFeatureExtractor
-
 class RuntimeGRAMAmbisonics(torch.nn.Module):
     def __init__(self, 
                  model_size, 
@@ -29,11 +30,13 @@ class RuntimeGRAMAmbisonics(torch.nn.Module):
         self.is_sn3d = is_sn3d
         self.is_real_data = is_coord_normal
         self.feature_extractor = FeatureExtractor() 
+        self.interpolate_to = 100
 
     def to_feature(self, batch_audio):
         return self.feature_extractor(batch_audio)
 
     def audio2feats(self, audio):
+        print(audio.shape)
         x = self.to_feature(audio)
         # handle coordinate and normalization transformation
         if self.is_real_data:
@@ -73,12 +76,25 @@ class RuntimeGRAMAmbisonics(torch.nn.Module):
         return embeddings
     
     def get_timestamp_embeddings(self, audio):
+        audio_len = (max(audio.shape) // self.sample_rate) * 1000
+        interpolate_length = audio_len // self.interpolate_to 
         features = self.audio2feats(audio)
         self.model.eval()
         with torch.no_grad():
             if features.ndim != 4:
                 features = features.unsqueeze(0)
             embeddings = self.model(features, strategy="raw")
+            # interpolate expects the 'Time' dimension last
+            embeddings = embeddings.transpose(1, 2) 
+            embeddings = F.adaptive_avg_pool1d(embeddings, interpolate_length)
+            # new_embeddings_p = F.interpolate(
+            #         embeddings, 
+            #         size=interpolate_length,
+            #         mode='linear', 
+            #         align_corners=False
+            #     )
+            # cange layout back to (Batch, Time, Embedding) ---
+            embeddings = embeddings.transpose(1, 2)
         ts = get_timestamps(self.sample_rate, audio.shape[0], max(audio.shape), embeddings)
         assert ts.shape[-1] == embeddings.shape[1]
         return embeddings, ts 
