@@ -104,7 +104,7 @@ class RuntimeGRAMAmbisonics(torch.nn.Module):
         return embeddings, ts 
 
 
-    def _get_timestamps(self, B, interpolate_length, input_audio_len, x, is_native_frame_resolution):
+    def _get_timestamps(self, B, input_audio_len, x, is_native_frame_resolution):
         audio_len = input_audio_len
         sec = audio_len / self.sample_rate
         x_len = x.shape[1]
