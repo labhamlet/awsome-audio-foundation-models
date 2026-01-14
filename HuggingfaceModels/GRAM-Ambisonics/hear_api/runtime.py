@@ -5,11 +5,13 @@ import torch.nn.functional as F
 
 from .feature_helper import FeatureExtractor
 from transformers import AutoModel, AutoFeatureExtractor
+from typing import Optional 
 class RuntimeGRAMAmbisonics(torch.nn.Module):
     def __init__(self, 
                  model_size, 
                  is_sn3d,
-                 is_coord_normal) -> None:
+                 is_coord_normal,
+                 interpolation : Optional[int]) -> None:
         super().__init__()
 
         if model_size == "base":
@@ -30,13 +32,12 @@ class RuntimeGRAMAmbisonics(torch.nn.Module):
         self.is_sn3d = is_sn3d
         self.is_real_data = is_coord_normal
         self.feature_extractor = FeatureExtractor() 
-        self.interpolate_to = 100
+        self.interpolate_to = interpolation
 
     def to_feature(self, batch_audio):
         return self.feature_extractor(batch_audio)
 
     def audio2feats(self, audio):
-        print(audio.shape)
         x = self.to_feature(audio)
         # handle coordinate and normalization transformation
         if self.is_real_data:
@@ -84,17 +85,18 @@ class RuntimeGRAMAmbisonics(torch.nn.Module):
             if features.ndim != 4:
                 features = features.unsqueeze(0)
             embeddings = self.model(features, strategy="raw")
-            # interpolate expects the 'Time' dimension last
-            embeddings = embeddings.transpose(1, 2) 
-            embeddings = F.adaptive_avg_pool1d(embeddings, interpolate_length)
-            # new_embeddings_p = F.interpolate(
-            #         embeddings, 
-            #         size=interpolate_length,
-            #         mode='linear', 
-            #         align_corners=False
-            #     )
-            # cange layout back to (Batch, Time, Embedding) ---
-            embeddings = embeddings.transpose(1, 2)
+
+            if self.interpolate_to:
+              # interpolate expects the 'Time' dimension last
+              embeddings = embeddings.transpose(1, 2) 
+              embeddings = F.interpolate(
+                    embeddings, 
+                    size=interpolate_length,
+                    mode='linear', 
+                    align_corners=False
+                )
+              embeddings = embeddings.transpose(1, 2)
+
         ts = get_timestamps(self.sample_rate, audio.shape[0], max(audio.shape), embeddings)
         assert ts.shape[-1] == embeddings.shape[1]
         return embeddings, ts 
@@ -104,7 +106,8 @@ def get_timestamps(sample_rate, B, input_audio_len, x):
     audio_len = input_audio_len
     sec = audio_len / sample_rate
     x_len = x.shape[1]
-    step = sec / x_len * 1000  # sec -> ms
+    step = 80.0 #It is actually 80.0 instead, but is it? Because fft is calculated from the middle right. 
+    #Hmm, maybe we should instead do the middle. Let's try this with TAU-ov1.
     ts = torch.tensor([step * i for i in range(x_len)]).unsqueeze(0)
     ts = ts.repeat(B, 1)
     return ts
