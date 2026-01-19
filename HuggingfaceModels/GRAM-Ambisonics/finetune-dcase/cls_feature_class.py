@@ -17,6 +17,8 @@ import wave
 import contextlib
 from transformers import AutoFeatureExtractor
 
+import torchaudio
+from einops import rearrange
 
 def nCr(n, r):
     return math.factorial(n) // math.factorial(r) // math.factorial(n-r)
@@ -359,11 +361,9 @@ class FeatureClass:
 
                 feat = None
                 if self._dataset == 'foa':
-                    import torchaudio
-                    from einops import rearrange
                     # extract intensity vectors
                     audio, sr = torchaudio.load(_wav_path)
-                    audio = self.extractor(audio.unsqueeze(0))
+                    audio = self.extract(audio.unsqueeze(0))
                     feat = audio['input_values'][0]
                     feat = feat.cpu().numpy()
                     feat = rearrange(feat, "C T F -> T (C F)")
