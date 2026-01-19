@@ -193,7 +193,8 @@ class GRAM(torch.nn.Module):
         super().__init__()
         self.nb_classes = params['unique_classes']
         self.model = AutoModel.from_pretrained("labhamlet/gramt-ambisonics", trust_remote_code=True)
-        
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.model.to(device)
         self.model.requires_grad_(params["fine_tuning"])
         self.model.train()
         self.non_lin = nn.LeakyReLU(0.1)
@@ -217,7 +218,7 @@ class GRAM(torch.nn.Module):
         
     def forward(self, x):
         '''input: (batch_size, mic_channels, time_steps, mel_bins)'''
-        x = self.model.get_audio_representation(x, strategy="raw")
+        x = self.model(x, strategy="raw")
         x_aligned = x.permute(0, 2, 1)  # (batch, features, time_80ms)
             
         x_pooled = self.adaptive_pool(x_aligned)
