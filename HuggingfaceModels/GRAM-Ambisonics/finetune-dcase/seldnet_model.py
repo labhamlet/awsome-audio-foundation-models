@@ -189,12 +189,12 @@ class SeldModel(torch.nn.Module):
 
 
 class GRAM(torch.nn.Module):
-    def __init__(self, weights, out_shape, params):
+    def __init__(self, out_shape, params):
         super().__init__()
         self.nb_classes = params['unique_classes']
         self.model = AutoModel.from_pretrained("labhamlet/gramt-ambisonics", trust_remote_code=True)
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        self.model.to(device)
+        self.model.to(self.device)
         self.model.requires_grad_(params["fine_tuning"])
         self.model.train()
         self.non_lin = nn.LeakyReLU(0.1)

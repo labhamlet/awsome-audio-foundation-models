@@ -14,13 +14,13 @@ def get_params(argv='1'):
         
         fine_tuning=False,
         # INPUT PATH
-        dataset_dir='/projects/0/prjs1338/STARSS2023_32000',
+        dataset_dir='/content/tasks/tau2020',
 
         # OUTPUT PATHS
-        feat_label_dir='/projects/0/prjs1338/STARSS2023_gram_labels',
+        feat_label_dir='/content/labels/tau2020',
  
-        model_dir='/projects/0/prjs1338/STARSS2023_gram_models',            # Dumps the trained models and training curves in this folder
-        dcase_output_dir='/projects/0/prjs1338/STARSS2023_gram_results',    # recording-wise results are dumped in this path.
+        model_dir='/content/saved_models/GRAM_Ambisonics/tau2020',            # Dumps the trained models and training curves in this folder
+        dcase_output_dir='/content/outputs/GRAM_Ambisonics/tau2020',    # recording-wise results are dumped in this path.
 
         # DATASET LOADING PARAMETERS
         mode='dev',         # 'dev' - development or 'eval' - evaluation dataset
