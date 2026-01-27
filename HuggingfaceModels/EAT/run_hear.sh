@@ -10,7 +10,6 @@
 #SBATCH --array=0-10
 
 
-SLURM_ARRAY_TASK_ID=1
 task_dirs=(
 /projects/0/prjs1338/tasks
 /projects/0/prjs1338/tasks
@@ -36,7 +35,6 @@ tfds_crema_d-1.0.0-full
 nsynth_pitch-v2.2.3-5h
 vox_lingua_top10-hear2021-full
 )
-
 
 cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/EAT
 module load 2023

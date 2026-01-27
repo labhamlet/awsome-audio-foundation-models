@@ -36,10 +36,10 @@ vox_lingua_top10-hear2021-full
 )
 
 
-cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/Dasheng
+cd ~/phd/awsome-audio-foundation-models/Dasheng
 module load 2023
 module load Anaconda3/2023.07-2
-source activate hear-other-models-eval
+source activate dasheng
 cd listen-eval-kit
 
 embeddings_dir=/projects/0/prjs1338/DashengEmbeddingsHear

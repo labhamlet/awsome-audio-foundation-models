@@ -35,6 +35,7 @@ class RuntimeGRAMClean(torch.nn.Module):
         # This resamples/pads etc 
         audio = self.extractor(
             x, 
+            normalize=False
         )
         log_mel = audio['input_values']
 

@@ -118,8 +118,8 @@ FASTER_PARAM_GRID.update(
 EVENT_POSTPROCESSING_GRID = {
     "median_filter_ms": [250],
     "min_duration": [125, 250],
-    #    "median_filter_ms": [0, 62, 125, 250, 500, 1000],
-    #    "min_duration": [0, 62, 125, 250, 500, 1000],
+    # "median_filter_ms": [0, 62, 125, 250, 500, 1000],
+    # "min_duration": [0, 62, 125, 250, 500, 1000],
 }
 
 NUM_WORKERS = int(multiprocessing.cpu_count() / (max(1, torch.cuda.device_count())))

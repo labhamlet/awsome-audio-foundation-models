@@ -9,7 +9,7 @@
 #SBATCH --output=hear/slurm_output_%A_%a.out
 #SBATCH --array=3
 
-SLURM_ARRAY_TASK_ID=3
+SLURM_ARRAY_TASK_ID=11
 task_dirs=(
 /projects/0/prjs1338/tasks
 /projects/0/prjs1338/tasks
@@ -43,7 +43,7 @@ vox_lingua_top10-hear2021-full
 cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/GRAM-Clean
 module load 2023
 module load Anaconda3/2023.07-2
-source activate spatial-ssast-eval
+source activate hear-other-models-eval
 cd listen-eval-kit
 
 embeddings_dir=/projects/0/prjs1338/GRAMCleanEmbeddingsHear

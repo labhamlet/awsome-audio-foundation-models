@@ -53,6 +53,16 @@ TASK_SPECIFIC_PARAM_GRID = {
     "dcase2016_task2": {
         # sed_eval is very slow
         "check_val_every_n_epoch": [10],
+    },
+    "starss2023":{
+        "hidden_layers": [1],
+        "hidden_dim": [256, 512],
+        "dropout": [0.5],
+    },
+    "tau2021":{
+        "hidden_layers": [1],
+        "hidden_dim": [256, 512],
+        "dropout": [0.5],
     }
 }
 
@@ -99,7 +109,7 @@ FAST_PARAM_GRID = copy.deepcopy(PARAM_GRID)
 FAST_PARAM_GRID.update(
     {
         "max_epochs": [50],
-        "check_val_every_n_epoch": [3, 10],
+        "check_val_every_n_epoch": [10],
     }
 )
 
@@ -800,7 +810,6 @@ def get_events_for_all_files(
 def label_vocab_nlabels(embedding_path: Path) -> Tuple[pd.DataFrame, int]:
     # Reads the label vocab from the labelvocabulary.csv
     label_vocab = pd.read_csv(embedding_path.joinpath("labelvocabulary.csv"))
-    print(label_vocab)
     nlabels = len(label_vocab)
     assert nlabels == label_vocab["idx"].max() + 1
     return (label_vocab, nlabels)

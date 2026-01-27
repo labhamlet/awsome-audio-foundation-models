@@ -415,13 +415,7 @@ def task_embeddings(
         if metadata["sample_duration"] is not None:
             estimated_batch_size = max(
                 1,
-                int(
-                    # 0.9
-                    # One of the submissions needs smaller batches
-                    0.7
-                    * (120 / metadata["sample_duration"])
-                    * (16000 / embedding.sample_rate)
-                ),
+                256
             )
         else:
             # If the sample duration is None, we use a batch size of 1 as the audio

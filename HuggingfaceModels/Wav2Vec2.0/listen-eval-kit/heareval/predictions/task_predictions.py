@@ -53,6 +53,11 @@ TASK_SPECIFIC_PARAM_GRID = {
     "dcase2016_task2": {
         # sed_eval is very slow
         "check_val_every_n_epoch": [10],
+    },
+    "starss2023":{
+        "hidden_layers": [1],
+        "hidden_dim": [256, 512],
+        "dropout": [0.5],
     }
 }
 
@@ -99,7 +104,7 @@ FAST_PARAM_GRID = copy.deepcopy(PARAM_GRID)
 FAST_PARAM_GRID.update(
     {
         "max_epochs": [50],
-        "check_val_every_n_epoch": [3, 10],
+        "check_val_every_n_epoch": [10],
     }
 )
 

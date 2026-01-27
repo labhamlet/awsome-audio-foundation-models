@@ -9,7 +9,7 @@
 #SBATCH --output=hear/slurm_output_%A_%a.out
 #SBATCH --array=3
 
-SLURM_ARRAY_TASK_ID=3
+SLURM_ARRAY_TASK_ID=10
 task_dirs=(
 /projects/0/prjs1338/tasks
 /projects/0/prjs1338/tasks

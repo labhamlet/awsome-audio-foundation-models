@@ -2,7 +2,7 @@ import sys
 sys.path.append('..')
 import torch
 from .feature_helper import FeatureExtractor
-from transformers import AutoModel, AutoFeatureExtractor
+from dasheng import dasheng_base, dasheng_06B, dasheng_12B
 
 class RuntimeDasheng(torch.nn.Module):
     def __init__(self, 
@@ -11,26 +11,23 @@ class RuntimeDasheng(torch.nn.Module):
         super().__init__()
 
         if model_size == "base":
-            self.model = AutoModel.from_pretrained("mispeech/dasheng-base", outputdim=None, trust_remote_code=True)
+            self.model = dasheng_base()
             # sample rate and embedding sizes are required model attributes for the HEAR API
             self.embedding_size = 768
             self.scene_embedding_size = self.embedding_size
             self.timestamp_embedding_size = self.embedding_size
-            self.extractor = AutoFeatureExtractor.from_pretrained("mispeech/dasheng-base", trust_remote_code=True)
         elif model_size == "large":
-            self.model = AutoModel.from_pretrained("mispeech/dasheng-0.6B", trust_remote_code=True)
+            self.model = dasheng_06B()
             # sample rate and embedding sizes are required model attributes for the HEAR API
             self.embedding_size = 1280
             self.scene_embedding_size = self.embedding_size
             self.timestamp_embedding_size = self.embedding_size
-            self.extractor = AutoFeatureExtractor.from_pretrained("mispeech/dasheng-0.6B",trust_remote_code=True)
         elif model_size == "x-large":
-            self.model = AutoModel.from_pretrained("mispeech/dasheng-1.2B", trust_remote_code=True)
+            self.model = dasheng_12B()
             # sample rate and embedding sizes are required model attributes for the HEAR API
             self.embedding_size = 1536
             self.scene_embedding_size = self.embedding_size
             self.timestamp_embedding_size = self.embedding_size
-            self.extractor = AutoFeatureExtractor.from_pretrained("mispeech/dasheng-1.2B", trust_remote_code=True)
         else: 
             raise Exception("Wrong model size")
 
@@ -46,24 +43,21 @@ class RuntimeDasheng(torch.nn.Module):
     def audio2feats(self, audio):
         # This makes sure that audios are one channel.
         x = self.to_feature(audio)
-        audio = self.extractor(x, sampling_rate=self.sample_rate, return_tensors="pt")
-        return audio
+        return x
 
     def get_scene_embeddings(self, audio):
         features = self.audio2feats(audio)
         self.model.eval()
         with torch.no_grad():
-            embeddings = self.model(**features)
-        embeddings = embeddings.logits
-        return embeddings
+            embeddings = self.model(features)
+        return embeddings.mean(dim = 1)
     
     def get_timestamp_embeddings(self, audio):
         input_audio_len = max(audio.shape)
         features = self.audio2feats(audio)
         self.model.eval()
         with torch.no_grad():
-            embeddings = self.model(**features)
-            embeddings = embeddings.hidden_states
+            embeddings = self.model(features)
         # Get the timestamps from the audio, embeddings and sample rate.
         ts = get_timestamps(self.sample_rate, audio.shape[0], input_audio_len, embeddings)
         assert ts.shape[-1] == embeddings.shape[1]

@@ -9,12 +9,12 @@
 #SBATCH --output=slurm_output_%A_%a.out
 #SBATCH --array=0
 
-task_names=(dcase2016_task2-hear2021-full)
+task_names=(vox_lingua_top10-hear2021-full)
 
-export MW_MAE_MODEL_DIR=~/phd/hear-other-models-niche/MWMAE
+export MW_MAE_MODEL_DIR=~/phd/awsome-audio-foundation-models/MWMAE
 
 
-cd ~/phd/hear-other-models-niche/MWMAE
+cd ~/phd/awsome-audio-foundation-models/MWMAE
 module load 2023
 module load Anaconda3/2023.07-2
 source activate mwmae-eval
@@ -26,11 +26,11 @@ score_dir=hear_scores_baseline
 tasks_dir=/projects/0/prjs1338/tasks
 
 model_name=hear_configs.mwmae_base_200_4x16_384d-8h-4l
-task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
+task_name=vox_lingua_top10-hear2021-full
 
 
 python3 -m heareval.embeddings.runner "$model_name" --tasks-dir $tasks_dir --task "$task_name" --embeddings-dir $embeddings_dir
-python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name --grid fast
+python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name
 
 mkdir -p /projects/0/prjs1338/$score_dir/$model_name/$task_name
 
