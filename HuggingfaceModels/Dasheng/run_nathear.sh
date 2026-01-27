@@ -9,7 +9,6 @@
 #SBATCH --output=nathear/slurm_output_%A_%a.out
 #SBATCH --array=0-10
 
-SLURM_ARRAY_TASK_ID=3
 task_dirs=(
 /projects/0/prjs1338/tasks_noisy_ambisonics
 /projects/0/prjs1261/tasks_noisy_ambisonics
@@ -40,7 +39,8 @@ vox_lingua_top10-hear2021-full
 cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/Dasheng
 module load 2023
 module load Anaconda3/2023.07-2
-source activate spatial-ssast-eval
+source activate hear-other-models-eval
+
 cd listen-eval-kit
 
 embeddings_dir=/projects/0/prjs1338/DashengEmbeddingsNatHear

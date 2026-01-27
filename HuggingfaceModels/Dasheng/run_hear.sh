@@ -7,9 +7,8 @@
 #SBATCH --exclude=gcn118
 #SBATCH --time=02:00:00
 #SBATCH --output=hear/slurm_output_%A_%a.out
-#SBATCH --array=3
+#SBATCH --array=0-10
 
-SLURM_ARRAY_TASK_ID=3
 task_dirs=(
 /projects/0/prjs1338/tasks
 /projects/0/prjs1338/tasks

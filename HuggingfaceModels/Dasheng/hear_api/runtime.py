@@ -50,12 +50,17 @@ class RuntimeDasheng(torch.nn.Module):
         return audio
 
     def get_scene_embeddings(self, audio):
-        embeddings, _ = self.get_timestamp_embeddings(audio)  
-        # This takes the mean embedding across the scene! 
-        embeddings = torch.mean(embeddings, dim=1)
+        features = self.audio2feats(audio)
+        audio = features.input_values
+        self.model.eval()
+        with torch.no_grad():
+            embeddings = self.model(**features)
+            embeddings = embeddings.logits
+
         return embeddings
     
     def get_timestamp_embeddings(self, audio):
+        input_audio_len = max(audio.shape)
         features = self.audio2feats(audio)
         audio = features.input_values
         self.model.eval()
@@ -63,7 +68,7 @@ class RuntimeDasheng(torch.nn.Module):
             embeddings = self.model(**features)
             embeddings = embeddings.hidden_states
         # Get the timestamps from the audio, embeddings and sample rate.
-        ts = get_timestamps(self.sample_rate, audio.shape[0], audio.shape[-1], embeddings)
+        ts = get_timestamps(self.sample_rate, audio.shape[0], input_audio_len, embeddings)
         assert ts.shape[-1] == embeddings.shape[1]
         return embeddings, ts 
 
