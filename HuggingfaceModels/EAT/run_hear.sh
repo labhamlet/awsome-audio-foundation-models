@@ -10,6 +10,7 @@
 #SBATCH --array=0-10
 
 
+SLURM_ARRAY_TASK_ID=10
 task_dirs=(
 /projects/0/prjs1338/tasks
 /projects/0/prjs1338/tasks
@@ -39,7 +40,7 @@ vox_lingua_top10-hear2021-full
 cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/EAT
 module load 2023
 module load Anaconda3/2023.07-2
-source activate hear-other-models-eval
+source activate eat
 cd listen-eval-kit
 
 embeddings_dir=/projects/0/prjs1338/EATEmbeddingsHear
