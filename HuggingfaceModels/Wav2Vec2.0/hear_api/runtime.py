@@ -72,7 +72,7 @@ class RuntimeWav2Vec2(torch.nn.Module):
             embeddings = self.model(features).last_hidden_state
 
         # Get the timestamps from the audio, embeddings and sample rate.
-        ts = get_timestamps(self.sample_rate, audio.shape[0], audio.shape[-1], embeddings)
+        ts = get_timestamps(self.sample_rate, audio.shape[0], max(audio.shape), embeddings)
         assert ts.shape[-1] == embeddings.shape[1]
         return embeddings, ts 
 

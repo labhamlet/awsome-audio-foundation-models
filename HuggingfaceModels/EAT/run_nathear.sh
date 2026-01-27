@@ -2,14 +2,13 @@
 #SBATCH --partition=gpu_a100
 #SBATCH --gpus=1
 #SBATCH --job-name=MWMAE
-#SBATCH --ntasks_noisy_ambisonics=1
+#SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
 #SBATCH --exclude=gcn118
 #SBATCH --time=02:00:00
-#SBATCH --output=hear/slurm_output_%A_%a.out
-#SBATCH --array=3
+#SBATCH --output=nathear/slurm_output_%A_%a.out
+#SBATCH --array=0-10
 
-SLURM_ARRAY_TASK_ID=3
 task_dirs=(
 /projects/0/prjs1338/tasks_noisy_ambisonics
 /projects/0/prjs1261/tasks_noisy_ambisonics
@@ -23,19 +22,7 @@ task_dirs=(
 /projects/0/prjs1338/tasks_noisy_ambisonics
 /projects/0/prjs1338/tasks_noisy_ambisonics)
 
-modes=(
-    utterance
-    frame
-    utterance
-    utterance
-    utterance
-    utterance
-    utterance
-    utterance
-    utterance
-    utterance
-    utterance
-)
+
 task_names=(beijing_opera-v1.0-hear2021-full
 dcase2016_task2-hear2021-full
 fsd50k-v1.0-full
@@ -49,7 +36,6 @@ nsynth_pitch-v2.2.3-5h
 vox_lingua_top10-hear2021-full
 )
 
-
 cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/EAT
 module load 2023
 module load Anaconda3/2023.07-2
@@ -60,7 +46,6 @@ embeddings_dir=/projects/0/prjs1338/EATEmbeddingsHear
 score_dir=hear_scores
 task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
 task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}
-mode=${modes[$SLURM_ARRAY_TASK_ID]}
 
 model_name=hear_configs.eat
 model_size=base

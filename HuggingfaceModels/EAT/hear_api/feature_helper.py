@@ -1,14 +1,12 @@
 import torch
 import torchaudio 
 
+#Taken mainly from https://github.com/cwx-worst-one/EAT/blob/main/feature_extract/feature_extract.py
 class FeatureExtractor(torch.nn.Module):
     def __init__(
         self, 
     ) -> None:
         super().__init__()
-        self.target_length = 1024    # Recommended: 1024 for 10s audio
-        self.norm_mean = -4.268
-        self.norm_std = 4.569
     def _wav2feature(self, waveforms):
         """
         Convert audio waveforms to wav2vec2 acceptable inputs
@@ -49,12 +47,6 @@ class FeatureExtractor(torch.nn.Module):
                 dither=0.0,
                 frame_shift=10
             ).unsqueeze(0)
-            n_frames = mel.shape[1]
-            if n_frames < self.target_length:
-                mel = torch.nn.ZeroPad2d((0, 0, 0, self.target_length - n_frames))(mel)
-            else:
-                mel = mel[:, :self.target_length, :]
-            mel = (mel - self.norm_mean) / (self.norm_std * 2)
             mel = mel.unsqueeze(0).cuda()  # shape: [1, 1, T, F]
             features.append(mel)
         

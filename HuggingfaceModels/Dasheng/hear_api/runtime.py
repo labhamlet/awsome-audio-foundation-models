@@ -51,18 +51,15 @@ class RuntimeDasheng(torch.nn.Module):
 
     def get_scene_embeddings(self, audio):
         features = self.audio2feats(audio)
-        audio = features.input_values
         self.model.eval()
         with torch.no_grad():
             embeddings = self.model(**features)
-            embeddings = embeddings.logits
-
+        embeddings = embeddings.logits
         return embeddings
     
     def get_timestamp_embeddings(self, audio):
         input_audio_len = max(audio.shape)
         features = self.audio2feats(audio)
-        audio = features.input_values
         self.model.eval()
         with torch.no_grad():
             embeddings = self.model(**features)

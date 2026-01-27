@@ -7,9 +7,10 @@
 #SBATCH --exclude=gcn118
 #SBATCH --time=02:00:00
 #SBATCH --output=hear/slurm_output_%A_%a.out
-#SBATCH --array=3
+#SBATCH --array=0-10
 
-SLURM_ARRAY_TASK_ID=3
+
+SLURM_ARRAY_TASK_ID=1
 task_dirs=(
 /projects/0/prjs1338/tasks
 /projects/0/prjs1338/tasks
@@ -23,19 +24,6 @@ task_dirs=(
 /projects/0/prjs1338/tasks
 /projects/0/prjs1338/tasks)
 
-modes=(
-    utterance
-    frame
-    utterance
-    utterance
-    utterance
-    utterance
-    utterance
-    utterance
-    utterance
-    utterance
-    utterance
-)
 task_names=(beijing_opera-v1.0-hear2021-full
 dcase2016_task2-hear2021-full
 fsd50k-v1.0-full
@@ -60,7 +48,6 @@ embeddings_dir=/projects/0/prjs1338/EATEmbeddingsHear
 score_dir=hear_scores
 task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
 task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}
-mode=${modes[$SLURM_ARRAY_TASK_ID]}
 
 model_name=hear_configs.eat
 model_size=base
