@@ -37,7 +37,7 @@ class FeatureExtractor(torch.nn.Module):
 
             features.append(audio)
         
-        return torch.nn.utils.rnn.pad_sequence(features, batch_first=True)[:, 0, :]
+        return torch.nn.utils.rnn.pad_sequence(features, batch_first=True)
 
     def forward(self, x):
         x = self._wav2feature(x).cuda()
