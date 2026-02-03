@@ -44,7 +44,6 @@ from heareval.embeddings.task_embeddings import Embedding, task_embeddings
 @click.option(
     "--model-options", default="{}", help="A JSON dict of kwargs to pass to load_model"
 )
-
 def runner(
     module: str,
     model: str = None,
@@ -103,11 +102,11 @@ def runner(
 
         start = time.time()
         gpu_max_mem.reset()
-        
+
         # This is where we use the RIRs
-        task_embeddings(embedding=embedding, 
-                        task_path=task_path, 
-                        embed_task_dir=embed_task_dir)
+        task_embeddings(
+            embedding=embedding, task_path=task_path, embed_task_dir=embed_task_dir
+        )
 
         time_elapsed = time.time() - start
         gpu_max_mem_used = gpu_max_mem.measure()
@@ -132,12 +131,14 @@ def runner(
 
 
 if __name__ == "__main__":
-    seed = 42 
-    import random
-    import numpy as np 
+    seed = 42
     import os
+    import random
+
+    import numpy as np
+
     random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)

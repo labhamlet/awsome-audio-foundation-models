@@ -19,12 +19,12 @@ class RuntimeWav2Vec2(torch.nn.Module):
             self.extractor = AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-base")
 
         elif model_size == "large":
-            self.model = AutoModel.from_pretrained("facebook/wav2vec2-large-100k-voxpopuli")
+            self.model = AutoModel.from_pretrained("facebook/wav2vec2-large-robust")
             # sample rate and embedding sizes are required model attributes for the HEAR API
             self.embedding_size = 1024
             self.scene_embedding_size = self.embedding_size
             self.timestamp_embedding_size = self.embedding_size
-            self.extractor = AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-large-100k-voxpopuli")
+            self.extractor = AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-large-robust")
 
         else: 
             raise Exception("Wrong model size")

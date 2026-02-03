@@ -11,7 +11,8 @@ TODO:
     * If disk speed is the limiting factor maybe we should train
     many models simultaneously with one disk read?
 """
-
+import gc
+import os
 import copy
 import json
 import logging
@@ -30,6 +31,7 @@ import pandas as pd
 import pytorch_lightning as pl
 import torch
 import torchinfo
+from intervaltree import Interval, IntervalTree
 
 # import wandb
 from pytorch_lightning import seed_everything
@@ -53,7 +55,63 @@ TASK_SPECIFIC_PARAM_GRID = {
     "dcase2016_task2": {
         # sed_eval is very slow
         "check_val_every_n_epoch": [10],
-    }
+    },
+    "tau2018_ov1": {
+        "check_val_every_n_epoch": [1],
+        "patience": [3],    
+    },
+    "tau2018_ov1_split1": {
+        "check_val_every_n_epoch": [25],
+        "patience": [3],
+    },    
+    "tau2018_ov1_split8": {
+        "check_val_every_n_epoch": [25],
+        "patience": [3],
+    },    
+    "tau2018_ov1_split9": {
+        "check_val_every_n_epoch": [25],
+        "patience": [3],
+    },
+    "tau2018_ov2_split1": {
+        "check_val_every_n_epoch": [25],
+        "patience": [3],
+    },    
+    "tau2018_ov2_split8": {
+        "check_val_every_n_epoch": [25],
+        "patience": [3],
+    },    
+    "tau2018_ov2_split9": {
+        "check_val_every_n_epoch": [25],
+        "patience": [3],
+    },
+    "tau2018_ov3_split1": {
+        "check_val_every_n_epoch": [25],
+        "patience": [3],
+    },    
+    "tau2018_ov3_split8": {
+        "check_val_every_n_epoch": [25],
+        "patience": [3],
+    },    
+    "tau2018_ov3_split9": {
+        "check_val_every_n_epoch": [25],
+        "patience": [3],
+    },
+    "tau2019": {
+        "check_val_every_n_epoch": [25],
+        "patience": [3],
+    },
+    "tau2020": {
+        "check_val_every_n_epoch": [25],
+        "patience": [3],
+    },
+    "tau2021": {
+        "check_val_every_n_epoch": [24],
+        "patience": [3],
+    },
+    "starss23": {
+        "check_val_every_n_epoch": [25],
+        "patience": [3],
+    },
 }
 
 PARAM_GRID = {
@@ -117,13 +175,31 @@ FASTER_PARAM_GRID.update(
 # These are good for dcase, change for other event-based secret tasks
 EVENT_POSTPROCESSING_GRID = {
     "median_filter_ms": [250],
-    "min_duration": [125, 250],
+    "min_duration": [250, 500],
     #    "median_filter_ms": [0, 62, 125, 250, 500, 1000],
     #    "min_duration": [0, 62, 125, 250, 500, 1000],
 }
 
 NUM_WORKERS = int(multiprocessing.cpu_count() / (max(1, torch.cuda.device_count())))
 
+
+def convert_from_spherical_to_cart(az, el):
+    ele_rad = el*np.pi/180.
+    azi_rad = az*np.pi/180
+
+    tmp_label = np.cos(ele_rad)
+    x = np.cos(azi_rad) * tmp_label
+    y = np.sin(azi_rad) * tmp_label
+    z = np.sin(ele_rad)
+    return x.item(),y.item(),z.item()
+
+class SetEpochCallback(pl.Callback):
+    def __init__(self, epoch):
+        self.epoch = epoch
+    
+    def on_test_start(self, trainer, pl_module):
+        pl_module._current_epoch = self.epoch
+        print(f"Set epoch to {self.epoch}, model sees: {pl_module.current_epoch}")
 
 class OneHotToCrossEntropyLoss(pl.LightningModule):
     def __init__(self):
@@ -169,20 +245,27 @@ class FullyConnectedPrediction(torch.nn.Module):
             self.hidden = torch.nn.Sequential(*hidden_modules)
         else:
             self.hidden = torch.nn.Identity()  # type: ignore
-        self.projection = torch.nn.Linear(curdim, nlabels)
+
+        if prediction_type == "accdoa":
+            self.projection = torch.nn.Linear(curdim, 3 * nlabels)
+        else:
+            self.projection = torch.nn.Linear(curdim, nlabels)
 
         gain = torch.nn.init.calculate_gain(last_activation)
-        conf["initialization"](
-            self.projection.weight, gain=gain
-        )
+        conf["initialization"](self.projection.weight, gain=gain)
         self.logit_loss: torch.nn.Module
         if prediction_type == "multilabel":
             self.activation: torch.nn.Module = torch.nn.Sigmoid()
             self.logit_loss = torch.nn.BCEWithLogitsLoss()
-        elif prediction_type == "multiclass" or (prediction_type == "polar-classification"):
+        elif prediction_type == "multiclass" or (
+            prediction_type == "polar-classification"
+        ):
             self.activation = torch.nn.Softmax(dim=1)
             self.logit_loss = OneHotToCrossEntropyLoss()
         elif "regression" in prediction_type:
+            self.activation = torch.nn.Tanh()
+            self.logit_loss = torch.nn.MSELoss()
+        elif prediction_type == "accdoa":
             self.activation = torch.nn.Tanh()
             self.logit_loss = torch.nn.MSELoss()
         else:
@@ -209,6 +292,7 @@ class AbstractPredictionModel(pl.LightningModule):
         scores: List[ScoreFunction],
         conf: Dict,
         use_scoring_for_early_stopping: bool = True,
+        source : str = "static"
     ):
         super().__init__()
 
@@ -226,6 +310,9 @@ class AbstractPredictionModel(pl.LightningModule):
             idx: label for (label, idx) in self.label_to_idx.items()
         }
         self.scores = scores
+        self.prediction_type = prediction_type
+        self.nlabels = nlabels
+        self.source = source
 
     def forward(self, x):
         # x = self.layernorm(x)
@@ -237,6 +324,11 @@ class AbstractPredictionModel(pl.LightningModule):
         # It is independent of forward
         x, y, _ = batch
         y_hat = self.predictor.forward_logit(x)
+        if self.prediction_type == "accdoa" or ("regression" in self.prediction_type):
+            y_hat = self.predictor.activation(y_hat)
+            if self.prediction_type == "accdoa":
+                y_hat = y_hat.view(y.shape[0], self.nlabels, 3)
+
         loss = self.predictor.logit_loss(y_hat, y)
         # Logging to TensorBoard by default
         self.log("train_loss", loss)
@@ -247,11 +339,27 @@ class AbstractPredictionModel(pl.LightningModule):
         x, y, metadata = batch
         y_hat = self.predictor.forward_logit(x)
         y_pr = self.predictor(x)
-        z = {
-            "prediction": y_pr,
-            "prediction_logit": y_hat,
-            "target": y,
-        }
+
+        z = None
+        if self.prediction_type == "accdoa":
+            y_pr = y_pr.view(y.shape[0], self.nlabels, 3)
+            z = {
+                "prediction": y_pr,
+                "target": y,
+            }
+        
+        elif "regression" in self.prediction_type:
+            z = {
+                "prediction": y_pr,
+                "prediction_logit": y_pr,
+                "target": y,
+            }
+        else:
+            z = {
+                "prediction": y_pr,
+                "prediction_logit": y_hat,
+                "target": y,
+            }
         # https://stackoverflow.com/questions/38987/how-do-i-merge-two-dictionaries-in-a-single-expression-taking-union-of-dictiona
         return {**z, **metadata}
 
@@ -273,7 +381,7 @@ class AbstractPredictionModel(pl.LightningModule):
             if isinstance(score_ret, tuple):
                 end_scores[f"{name}_{score}"] = score_ret[0][1]
                 # All other scores will also be logged
-                for (subscore, value) in score_ret:
+                for subscore, value in score_ret:
                     end_scores[f"{name}_{score}_{subscore}"] = value
             elif isinstance(score_ret, float):
                 end_scores[f"{name}_{score}"] = score_ret
@@ -390,6 +498,127 @@ class ScenePredictionModel(AbstractPredictionModel):
                     target.detach().cpu().numpy(),
                 ),
             )
+            
+class ACCDOAPredictionModel(AbstractPredictionModel):
+    """
+    ACCDOA prediction model. For validation (and test),
+    we combine timestamp events that are adjacent,
+    but discard ones that are too short. We also do not use any post-processing step. 
+    Maybe it is possible to use post-processing for only the sound event detection part.
+    Let's get it without it first.
+    """
+
+    def __init__(
+        self,
+        nfeatures: int,
+        label_to_idx: Dict[str, int],
+        nlabels: int,
+        prediction_type: str,
+        scores: List[ScoreFunction],
+        validation_target_events: Dict[str, List[Dict[str, Any]]],
+        test_target_events: Dict[str, List[Dict[str, Any]]],
+        validation_target_timestamps: Dict[str, List[float]],
+        test_target_timestamps: Dict[str, List[float]],
+        conf: Dict,
+        use_scoring_for_early_stopping: bool = True,
+        source : str = 'static',
+        _nb_label_frames_1s: Optional[int] = 10
+    ):
+        super().__init__(
+            nfeatures=nfeatures,
+            label_to_idx=label_to_idx,
+            nlabels=nlabels,
+            prediction_type=prediction_type,
+            scores=scores,
+            conf=conf,
+            use_scoring_for_early_stopping=use_scoring_for_early_stopping,
+            source = source
+        )
+        self.target_events = {
+            "val": validation_target_events,
+            "test": test_target_events,
+        }
+        self.target_timestamps = {
+            "val": validation_target_timestamps,
+            "test": test_target_timestamps,
+        }
+        #If source is dynamic or static
+        self.source = source
+        self.cache = {}
+        self.cached = False
+        self._nb_label_frames_1s = _nb_label_frames_1s
+
+    def _cache(self, events, name):
+        self.cache[name] = events
+    def _retrieve_from_cache(self, name):
+        return self.cache[name]
+
+    def _score_epoch_end(self, name: str, outputs: List[Dict[str, List[Any]]]):
+        flat_outputs = self._flatten_batched_outputs(
+            outputs,
+            keys=["target", "prediction", "filename", "timestamp"],
+            # This is a list of string, not tensor, so we don't need to stack it
+            dont_stack=["filename"],
+        )
+        #Get the target and predictions.
+        #Later we need to post process them.
+        target, prediction, filename, timestamp = (
+            flat_outputs[key]
+            for key in [
+                "target",
+                "prediction",
+                "filename",
+                "timestamp",
+            ]
+        )
+
+        self.log(
+            f"{name}_loss",
+            self.predictor.logit_loss(prediction, target),
+            prog_bar=True,
+            logger=True,
+        )
+        if name == "test" or self.use_scoring_for_early_stopping:
+            #Here we get events for all files per filename.
+            #TODO finish mapping this!
+            pred_events, diff, _max_frames = get_accdoa_events(
+                prediction,
+                filename,
+                timestamp,
+                self.nlabels
+            )
+            ref_events, _max_ref_frames = get_ref_accdoa_events(
+                  self.target_events[name],             
+                  self.target_timestamps[name],
+                  self.nlabels,
+                  label_to_idx=self.label_to_idx
+              )
+            _nb_pred_frames_1s = int(1000 // diff)
+            #Get the number of label frames and pred frames per second.
+            _nb_label_frames_1s = _nb_pred_frames_1s if self.source == "static" else self._nb_label_frames_1s
+            self.log_scores(
+                name, score_args=(pred_events,
+                    ref_events,
+                    _nb_label_frames_1s,
+                    _nb_pred_frames_1s,
+                    _max_frames,
+                    _max_ref_frames
+                    )
+            )
+            if name == "test":
+                # Cache all predictions for later serialization
+                self.test_predictions = {
+                    "target": target.detach().cpu(),
+                    "prediction": prediction.detach().cpu(),
+                    "target_events": self.target_events[name],
+                    "predicted_events": pred_events,
+                    "timestamp": timestamp,
+                }
+        
+    def epoch_best_postprocessing_or_default(
+        self, epoch: int
+    ) -> Tuple[Tuple[str, Any], ...]:
+        return []
 
 
 class EventPredictionModel(AbstractPredictionModel):
@@ -435,7 +664,7 @@ class EventPredictionModel(AbstractPredictionModel):
         if self.use_scoring_for_early_stopping:
             try:
                 return self.epoch_best_postprocessing[epoch]
-            except KeyError as k:
+            except KeyError:
                 print("Got key erorr with epoch number : {k} using the last epoch")
                 return self.epoch_best_postprocessing[epoch - 1]
         else:
@@ -469,7 +698,7 @@ class EventPredictionModel(AbstractPredictionModel):
             logger=True,
         )
 
-        epoch = self.current_epoch
+        epoch = getattr(self, "inference_epoch", self.current_epoch)
         if name == "val":
             postprocessing_cached = None
         elif name == "test":
@@ -489,7 +718,8 @@ class EventPredictionModel(AbstractPredictionModel):
             )
 
             score_and_postprocessing = []
-            for postprocessing in tqdm(predicted_events_by_postprocessing):
+            for postprocessing in predicted_events_by_postprocessing:
+                print("post processing")
                 predicted_events = predicted_events_by_postprocessing[postprocessing]
                 primary_score_fn = self.scores[0]
                 primary_score_ret = primary_score_fn(
@@ -497,6 +727,7 @@ class EventPredictionModel(AbstractPredictionModel):
                     predicted_events,
                     self.target_events[name],
                 )
+                print("primary is done")
                 # If the score returns a tuple of scores, the first score
                 # is used
                 if isinstance(primary_score_ret, tuple):
@@ -522,7 +753,6 @@ class EventPredictionModel(AbstractPredictionModel):
                 print("BEST POSTPROCESSING", best_postprocessing)
                 for k, v in best_postprocessing:
                     self.log(f"postprocessing/{k}", v, logger=True)
-                print(epoch, flush = True)
                 self.epoch_best_postprocessing[epoch] = best_postprocessing
             predicted_events = predicted_events_by_postprocessing[best_postprocessing]
 
@@ -541,6 +771,7 @@ class EventPredictionModel(AbstractPredictionModel):
                 name, score_args=(predicted_events, self.target_events[name])
             )
 
+
 class SplitMemmapDataset(Dataset):
     """
     Embeddings are memmap'ed, unless in-memory = True.
@@ -557,7 +788,7 @@ class SplitMemmapDataset(Dataset):
         embedding_type: str,
         in_memory: bool,
         metadata: bool,
-        task : str,
+        task: str,
         is_test: bool,
         random_probe: bool,
     ):
@@ -583,17 +814,16 @@ class SplitMemmapDataset(Dataset):
         )
         if in_memory:
             self.embeddings = torch.stack(
-                [torch.tensor(e) for e in tqdm(self.embeddings)]
+                [torch.tensor(e) for e in self.embeddings]
             )
             nandim = self.embeddings.isnan().sum().tolist()
             infdim = self.embeddings.isinf().sum().tolist()
             assert nandim == 0 and infdim == 0
-        
-        self.labels = pickle.load(
-                open(embedding_path.joinpath(f"{split_name}.target-labels.pkl"), "rb")
-            )
 
-        
+        self.labels = pickle.load(
+            open(embedding_path.joinpath(f"{split_name}.target-labels.pkl"), "rb")
+        )
+
         # Only used for event-based prediction, for validation and test scoring,
         # For timestamp (event) embedding tasks,
         # the metadata for each instance is {filename: , timestamp: }.
@@ -618,20 +848,47 @@ class SplitMemmapDataset(Dataset):
         Later we reduce this with an argmax to get the vocabulary indices.
         """
         ys = []
-        for idx in tqdm(range(len(self.labels))):
+        for idx in range(len(self.labels)):
             # If we indeed have self.label_to_idx!
-            if ("cartesian" not in task) and ("polar" not in task) and ("distance" not in task):
+            if (
+                ("cartesian" not in task)
+                and ("polar" not in task)
+                and ("distance" not in task)
+                and ("accdoa" not in task)
+            ):
                 labels = [self.label_to_idx[str(label)] for label in self.labels[idx]]
                 y = label_to_binary_vector(labels, self.nlabels)
             elif "distance" in task:
                 y = torch.abs(torch.tensor(self.labels[idx]))
+            elif "accdoa" in task:
+                y = torch.zeros((self.nlabels, 3))
+                # active_classes: list of strings (e.g., ["dog", "car"])
+                # active_doas: list of tuples (e.g., [(x1,y1,z1), (x2,y2,z2)])
+                if len(self.labels[idx]) == 0:
+                  active_classes = [] 
+                  active_doas = []
+                else:
+                  active_classes = []
+                  active_doas = []
+                  for label in self.labels[idx]:
+                    active_classes.append(label[0])
+                    active_doas.append(label[1])
+                
+                for class_str, doa_tuple in zip(active_classes, active_doas):
+                    # Convert string label to integer index
+                    class_idx = self.label_to_idx[str(class_str)]
+                    x_cat, y_cat, z_cat = convert_from_spherical_to_cart(doa_tuple[0], doa_tuple[1])
+                    y[class_idx] = torch.tensor([x_cat,y_cat,z_cat]).float()
             else:
                 y = torch.tensor(self.labels[idx])
             ys.append(y)
         self.y = torch.stack(ys)
         if self.y.ndim == 1:
             self.y = self.y.unsqueeze(1)
-        assert self.y.shape == (len(self.labels), self.nlabels)
+        if "accdoa" in task:
+            assert self.y.shape == (len(self.labels), self.nlabels, 3)
+        else:
+            assert self.y.shape == (len(self.labels), self.nlabels)
 
     def __len__(self) -> int:
         return self.dim[0]
@@ -639,10 +896,155 @@ class SplitMemmapDataset(Dataset):
     def __getitem__(self, idx) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
         if self.random_probe:
             random_y_idx = random.randint(0, len(self) - 1)
-            return self.embeddings[idx], self.y[idx if self.is_test else random_y_idx], self.metadata[idx]
+            return (
+                self.embeddings[idx],
+                self.y[idx if self.is_test else random_y_idx],
+                self.metadata[idx],
+            )
         else:
             return self.embeddings[idx], self.y[idx], self.metadata[idx]
 
+
+def get_ref_accdoa_events(
+    references: torch.Tensor,
+    ref_timestamps: Dict[str, List[float]],
+    nb_classes: int, 
+    label_to_idx : Dict[str, int] = None
+) -> Dict[Tuple[Tuple[str, Any], ...], Dict[str, List[Dict[str, Union[str, float]]]]]:
+
+    #This event dict has to contain file_names as key and the values should be frame_ind : [[detected_class_idx_1, 0, x, y, z, 0], [detected_class_idx_2, 0, x, y, z, 0]]
+    #First key is the filename, and the second key in the dict is the frame_idx.    
+    event_dict: Dict[
+        str, Dict[int, List[List[int | float]]]
+    ] = {}
+
+    max_frames : Dict[str, int] = {}
+    for filename in ref_timestamps:
+        filename = os.path.basename(filename)
+        if filename not in event_dict:
+            event_dict[filename] = {}
+        # Loads from the test/valid folds.
+        assert sorted(ref_timestamps[filename]) == ref_timestamps[filename], f"Timestamps for {filename} is not sorted!"
+        
+        #Here just get the frame_idx from the timestamp information
+        for frame_ind in range(len(ref_timestamps[filename])):
+          events = references[filename][frame_ind]
+          if len(events) != 0: #If there is an active event
+            for event in events:
+              class_str = event[0]
+              doa_tuple = event[1]   
+              assert len(doa_tuple) == 2, f"DOA Tuple is not polar : {doa_tuple}"
+              class_idx = label_to_idx[str(class_str)]
+              if filename not in event_dict:
+                event_dict[filename] = {}
+              if frame_ind not in event_dict[filename]:
+                event_dict[filename][frame_ind] = []
+            
+              event_dict[filename][frame_ind].append([class_idx, 0, float(doa_tuple[0]), float(doa_tuple[1])])
+        max_frames[filename] = frame_ind
+    return event_dict, max_frames
+
+def get_accdoa_events(
+    predictions: torch.Tensor,
+    filenames: List[str],
+    timestamps,
+    nb_classes: int, 
+) -> Dict[Tuple[Tuple[str, Any], ...], Dict[str, List[Dict[str, Union[str, float]]]]]:
+    """
+    Produces lists of events from a set of frame based label accdoas.
+    The input prediction tensor may contain frame predictions from a set of different
+    files concatenated together. file_timestamps has a list of filenames and
+    timestamps for each frame in the predictions tensor.
+
+    We split the predictions into separate tensors based on the filename and compute
+    events based on those individually.
+
+    If no postprocessing is specified (during training), we try a
+    variety of ways of postprocessing the predictions into events,
+    from the postprocessing_grid including median filtering and
+    minimum event length.
+
+
+    Args:
+        predictions: a tensor of frame based multi-label predictions.
+        filenames: a list of filenames where each entry corresponds
+            to a frame in the predictions tensor.
+        timestamps: a list of timestamps where each entry corresponds
+            to a frame in the predictions tensor.
+        idx_to_label: Index to label mapping.
+        postprocessing: See above.
+
+    Returns:
+        A dictionary from filtering params to the following values:
+        A dictionary of lists of events keyed on the filename slug.
+        The event list is of dicts of the following format:
+            {"label": str, "start": float ms, "end": float ms}
+    """
+    #Event files with filename_Dict.
+    event_files: Dict[str, Dict[int, torch.Tensor]] = {}
+    for timestamp_idx, (filename, timestamp) in tqdm(enumerate(zip(filenames, timestamps))):
+        slug = Path(filename).name
+        if slug not in event_files:
+          event_files[slug] = {}
+        #Get the ACCDOA predictions for the timestamp.
+        event_files[slug][float(timestamp)] = predictions[timestamp_idx]
+
+
+    #How many frames were there in the audio? 
+    max_frames : Dict[str, int] = {}
+    #This event dict has to contain file_names as key and the values should be frame_ind : [[detected_class_idx_1, 0, x, y, z, 0], [detected_class_idx_2, 0, x, y, z, 0]]
+    #First key is the filename, and the second key in the dict is the frame_idx.   \
+    #contains only the detected classes. 
+    event_dict: Dict[
+        str, Dict[int, List[List[int | float]]]
+    ] = {}
+    
+    for file_name in tqdm(event_files.keys()):
+        accdoa_dict, diff, max_frame = get_accdoa_labels(event_files[file_name], nb_classes)
+        event_dict[file_name] = accdoa_dict
+        max_frames[file_name] = max_frame
+
+    return event_dict, diff, max_frames
+
+
+def get_accdoa_labels(accdoa_in, nb_classes) -> Dict[int, List[List[int]]]:
+    """
+    Extracts SED labels and coordinates from ACCDOA format.
+    
+    Returns:
+        sed: Boolean array (Total_Frames, nb_classes). Active if magnitude > 0.5.
+        accdoa_vectors: Array (Total_Frames, nb_classes, 3). Format [x, y, z].
+        frame_interval: Float (time difference between frames) or Default 0.02.
+    """
+
+    timestamps = sorted(accdoa_in.keys())
+    #For each timestamp, we have predictions!
+    predictions_list = [accdoa_in[t].detach().cpu().numpy() for t in timestamps]
+    accdoa_vectors = np.stack(predictions_list)
+    predictions = {} 
+
+    #The time frame for the accdoa vectors.
+    for frame_idx in range(len(accdoa_vectors)):
+        #Get the prediction!
+        current_frame = accdoa_vectors[frame_idx] 
+        sed_magnitudes = np.linalg.norm(current_frame, axis=1)
+        # Find indices where magnitude > 0.5 
+        active_classes = np.where(sed_magnitudes > 0.5)[0]
+        #If there was an active class, append it to the predictions dictonary.
+        if len(active_classes) > 0:
+            predictions[frame_idx] = []
+            for class_idx in active_classes:
+                x, y, z = current_frame[class_idx]
+                predictions[frame_idx].append([
+                    int(class_idx), 
+                    0, 
+                    float(x), 
+                    float(y), 
+                    float(z), 
+                    0
+                ])
+    #Here we return the predictions, model_resolution, and the maximum number of frames in the audio.
+    return predictions, np.mean(np.diff(np.array(timestamps))), frame_idx
 
 
 def create_events_from_prediction(
@@ -698,9 +1100,9 @@ def create_events_from_prediction(
             np.where(predictions[:, label])[0]
         ):
             grouptuple = tuple(group)
-            assert (
-                tuple(sorted(grouptuple)) == grouptuple
-            ), f"{sorted(grouptuple)} != {grouptuple}"
+            assert tuple(sorted(grouptuple)) == grouptuple, (
+                f"{sorted(grouptuple)} != {grouptuple}"
+            )
             startidx, endidx = (grouptuple[0], grouptuple[-1])
 
             start = timestamps[startidx]
@@ -761,7 +1163,7 @@ def get_events_for_all_files(
     assert predictions.shape[0] == len(filenames)
     assert predictions.shape[0] == len(timestamps)
     event_files: Dict[str, Dict[float, torch.Tensor]] = {}
-    for i, (filename, timestamp) in enumerate(zip(filenames, timestamps)):
+    for i, (filename, timestamp) in tqdm(enumerate(zip(filenames, timestamps))):
         slug = Path(filename).name
 
         # Key on the slug to be consistent with the ground truth
@@ -789,7 +1191,8 @@ def get_events_for_all_files(
         for postprocess_dict in tqdm(postprocessing_confs):
             postprocess = tuple(postprocess_dict.items())
             event_dict[postprocess] = {}
-            for slug, timestamp_predictions in event_files.items():
+            for slug, timestamp_predictions in tqdm(event_files.items()):
+                # I think this is wrong; Let's see
                 event_dict[postprocess][slug] = create_events_from_prediction(
                     timestamp_predictions, idx_to_label, **postprocess_dict
                 )
@@ -812,12 +1215,12 @@ def dataloader_from_split_name(
     nlabels: int,
     embedding_type: str,
     in_memory: bool,
-    task : str,
+    task: str,
     metadata: bool = True,
     batch_size: int = 64,
     pin_memory: bool = True,
     is_test: bool = False,
-    random_probe: bool = False
+    random_probe: bool = False,
 ) -> DataLoader:
     """
     Get the dataloader for a `split_name` or a list of `split_name`
@@ -910,7 +1313,7 @@ class GridPointResult:
         epoch: int,
         time_in_min: float,
         hparams: Dict[str, Any],
-        postprocessing: Tuple[Tuple[str, Any], ...],
+        postprocessing: Optional[Tuple[Tuple[str, Any], ...]],
         trainer: pl.Trainer,
         validation_score: float,
         score_mode: str,
@@ -938,6 +1341,90 @@ class GridPointResult:
         )
 
 
+
+def map_to_frames(target_events: Dict[str, List[Dict[str, Any]]], timestamps: Dict[str, List[float]], metadata):
+    timestamp_labels = {}
+
+    #For each file, we append the events that occur.
+    for file_name in target_events:
+        events = target_events[file_name]
+        tree = IntervalTree()
+        for event in events:
+            tree.addi(event["start"], event["end"], (event["label"], event["direction"]))
+        labels_for_sound = []
+        #At each timestamp from the model, append it to the labels.
+        for time_stamp in timestamps[file_name]:
+            interval_labels: List[Optional[Tuple[str, List[float]]]] = [interval.data for interval in tree[time_stamp]]
+            labels_for_sound.append(interval_labels)
+            #At the end, we have [[Class_name, direction]]
+            #If there was no event active at that time stamp, we have an empty array.
+            #If there were multiple events, than it is List[List]
+        timestamp_labels[file_name] = labels_for_sound
+
+    return timestamp_labels
+
+# Only to be used with evaluation data
+def load_timestamps(embedding_path, metadata, split_name):
+    """
+    Load timestamps for audio files.
+    
+    Args:
+        embedding_path: Path to embeddings directory
+        metadata: Metadata dict containing optional '_nb_label_frames_1s'
+        split_name: Name of the data split
+        
+    Returns:
+        dict: Mapping of filename to list of timestamps
+    """
+    label_frame_resolution = metadata.get("_nb_label_frames_1s")
+    
+    if label_frame_resolution is not None:
+        return _load_timestamps_from_lengths(embedding_path, split_name, label_frame_resolution)
+    else:
+        return _load_timestamps_from_json(embedding_path, split_name)
+
+
+def _load_timestamps_from_lengths(embedding_path, split_name, label_frame_resolution):
+    """Generate timestamps from audio lengths and frame count."""
+    filename_lengths_path = embedding_path.joinpath(
+        f"{split_name}.filename-lengths-ms.json"
+    )
+    
+    with open(filename_lengths_path) as f:
+        filename_to_length = json.load(f)
+    
+    label_resolution_ms = 1000 // label_frame_resolution
+    timestamps = {}
+    
+    for filename, length_ms in filename_to_length.items():
+        timestamps[filename] = list(range(
+            0, 
+            int(length_ms + label_resolution_ms), 
+            label_resolution_ms
+        ))
+    
+    return timestamps
+
+
+def _load_timestamps_from_json(embedding_path, split_name):
+    """Load timestamps from pre-existing JSON file."""
+    timestamps_path = embedding_path.joinpath(
+        f"{split_name}.filename-timestamps.json"
+    )
+    
+    with open(timestamps_path) as f:
+        timestamp_pairs = json.load(f)
+    
+    timestamps = {}
+    for filename, timestamp in timestamp_pairs:
+        filename = os.path.basename(filename)
+        if filename not in timestamps:
+            timestamps[filename] = []
+        timestamps[filename].append(float(timestamp))
+    
+    return timestamps
+
+
 def task_predictions_train(
     embedding_path: Path,
     embedding_size: int,
@@ -951,9 +1438,8 @@ def task_predictions_train(
     gpus: Any,
     in_memory: bool,
     deterministic: bool,
-    task : str,
-    random_probe: bool = False
-
+    task: str,
+    random_probe: bool = False,
 ) -> GridPointResult:
     """
     Train a predictor for a specific task using pre-computed embeddings.
@@ -962,7 +1448,6 @@ def task_predictions_train(
     start = time.time()
     predictor: AbstractPredictionModel
     if metadata["embedding_type"] == "event":
-
         def _combine_target_events(split_names: List[str]):
             """
             This combines the target events from the list of splits and
@@ -1005,18 +1490,47 @@ def task_predictions_train(
         else:
             postprocessing_grid = EVENT_POSTPROCESSING_GRID
 
-        predictor = EventPredictionModel(
-            nfeatures=embedding_size,
-            label_to_idx=label_to_idx,
-            nlabels=nlabels,
-            prediction_type=metadata["prediction_type"],
-            scores=scores,
-            validation_target_events=validation_target_events,
-            test_target_events=test_target_events,
-            postprocessing_grid=postprocessing_grid,
-            conf=conf,
-            use_scoring_for_early_stopping=use_scoring_for_early_stopping,
-        )
+        print("VALID: ", data_splits["valid"])
+        print("TEST: ", data_splits["test"])
+        if metadata["prediction_type"] == "accdoa":
+            _timestamps_test = {}
+            _timestamps_valid = {}
+            for split_name in data_splits["valid"]:
+                _timestamps_valid.update(load_timestamps(embedding_path, metadata, split_name))
+            for split_name in data_splits["test"]:
+                _timestamps_test.update(load_timestamps(embedding_path, metadata, split_name))
+            #This gives us a dictionary of the events where an event is active.
+            validation_target_events: Dict = map_to_frames(validation_target_events, _timestamps_valid, metadata)
+            test_target_events: Dict = map_to_frames(test_target_events, _timestamps_test, metadata)
+        
+            predictor = ACCDOAPredictionModel(
+                nfeatures=embedding_size,
+                label_to_idx=label_to_idx,
+                nlabels=nlabels,
+                prediction_type=metadata["prediction_type"],
+                scores=scores,
+                validation_target_events=validation_target_events,
+                test_target_events=test_target_events,
+                validation_target_timestamps= _timestamps_valid,
+                test_target_timestamps= _timestamps_test,
+                conf=conf,
+                use_scoring_for_early_stopping=use_scoring_for_early_stopping,
+                source = metadata["source_dynamics"],
+                _nb_label_frames_1s = metadata.get("_nb_label_frames_1s", None)
+            )
+        else:
+            predictor = EventPredictionModel(
+                nfeatures=embedding_size,
+                label_to_idx=label_to_idx,
+                nlabels=nlabels,
+                prediction_type=metadata["prediction_type"],
+                scores=scores,
+                validation_target_events=validation_target_events,
+                test_target_events=test_target_events,
+                postprocessing_grid=postprocessing_grid,
+                conf=conf,
+                use_scoring_for_early_stopping=use_scoring_for_early_stopping,
+            )
     elif metadata["embedding_type"] == "scene":
         predictor = ScenePredictionModel(
             nfeatures=embedding_size,
@@ -1055,7 +1569,9 @@ def task_predictions_train(
     logger.log_hyperparams(hparams_to_json(conf))
 
     trainer = pl.Trainer(
-        callbacks=[checkpoint_callback] if random_probe else [checkpoint_callback, early_stop_callback],
+        callbacks=[checkpoint_callback]
+        if random_probe
+        else [checkpoint_callback, early_stop_callback],
         gpus=gpus,
         check_val_every_n_epoch=conf["check_val_every_n_epoch"],
         max_epochs=50 if random_probe else conf["max_epochs"],
@@ -1076,8 +1592,8 @@ def task_predictions_train(
         in_memory=in_memory,
         metadata=False,
         task=task,
-        is_test = False,
-        random_probe=random_probe
+        is_test=False,
+        random_probe=random_probe,
     )
     valid_dataloader = dataloader_from_split_name(
         data_splits["valid"],
@@ -1088,7 +1604,7 @@ def task_predictions_train(
         batch_size=conf["batch_size"],
         in_memory=in_memory,
         task=task,
-        is_test = True,
+        is_test=True,
         random_probe=random_probe,
     )
     trainer.fit(predictor, train_dataloader, valid_dataloader)
@@ -1096,7 +1612,8 @@ def task_predictions_train(
         sys.stdout.flush()
         end = time.time()
         time_in_min = (end - start) / 60
-        epoch = torch.load(checkpoint_callback.best_model_path)["epoch"]
+        epoch = torch.load(checkpoint_callback.best_model_path, weights_only = False)["epoch"]
+        print(f"Loaded epoch : {epoch}")
         if metadata["embedding_type"] == "event":
             best_postprocessing = predictor.epoch_best_postprocessing_or_default(epoch)
         else:
@@ -1146,14 +1663,13 @@ def task_predictions_test(
         in_memory=in_memory,
         task=task,
         is_test=True,
-        random_probe=False
+        random_probe=False,
     )
 
     trainer = grid_point.trainer
     # This hack is necessary because we use the best validation epoch to
     # choose the event postprocessing
-    trainer.fit_loop.current_epoch = grid_point.epoch
-
+    trainer.lightning_module.inference_epoch = grid_point.epoch
     # Run tests
     test_results = trainer.test(
         ckpt_path=grid_point.model_path, dataloaders=test_dataloader
@@ -1161,6 +1677,7 @@ def task_predictions_test(
     assert len(test_results) == 1, "Should have only one test dataloader"
     test_results = test_results[0]
     return test_results
+
 
 
 def serialize_value(v):
@@ -1205,9 +1722,9 @@ def data_splits_from_folds(folds: List[str]) -> List[Dict[str, List[str]]]:
                 "test": [test_fold],
             }
         )
-        assert not set(train_folds).intersection(
-            {test_fold, valid_fold}
-        ), "Train folds are not distinct from the dev and the test folds"
+        assert not set(train_folds).intersection({test_fold, valid_fold}), (
+            "Train folds are not distinct from the dev and the test folds"
+        )
 
     return all_data_splits
 
@@ -1279,7 +1796,11 @@ def get_splits_from_metadata(metadata: Dict) -> List[Dict[str, List[str]]]:
         # splits to test over. This expects that k data folds were generated
         # during pre-processing and the names of each of these folds is listed
         # in the metadata["folds"] variable.
-        data_splits = data_splits_from_folds(folds)
+        fold_spec = metadata.get("fold_specification", None)
+        if fold_spec is not None:
+            data_splits = fold_spec
+        else:
+            data_splits = data_splits_from_folds(folds)
     else:
         raise AssertionError(
             f"Unknown split_mode: {metadata['split_mode']} in task metadata."
@@ -1295,9 +1816,9 @@ def sort_grid_points(
     Sort grid point results in place, so that the first result
     is the best.
     """
-    assert (
-        len(set([g.score_mode for g in grid_point_results])) == 1
-    ), "Score modes should be same for all the grid points"
+    assert len(set([g.score_mode for g in grid_point_results])) == 1, (
+        "Score modes should be same for all the grid points"
+    )
     mode: str = grid_point_results[0].score_mode
     # Pick the model with the best validation score
     if mode == "max":
@@ -1352,10 +1873,25 @@ def task_predictions(
     # wandb.init(project="heareval", tags=["predictions", embedding_path.name])
 
     label_to_idx = label_vocab_as_dict(label_vocab, key="label", value="idx")
-    scores = [
-        available_scores[score](label_to_idx=label_to_idx)
-        for score in metadata["evaluation"]
-    ]
+    scores = [] 
+    for score in metadata["evaluation"]:
+      if score == "SELD":
+        score_method = available_scores[score](
+          label_to_idx=label_to_idx,
+          doa_threshold = metadata["scoring_params"]["doa_threshold"],
+          average = metadata["scoring_params"]["average"]
+        )
+      elif score == "OldSELD":
+        score_method = available_scores[score](
+          label_to_idx=label_to_idx,
+          azimuth_list = metadata["scoring_params"]["azimuth_limits"], 
+          elevation_list = metadata["scoring_params"]["elevation_limits"],
+          _doa_resolution = metadata["scoring_params"]["doa_resolution"] 
+        )        
+      else:
+        score_method = available_scores[score](label_to_idx=label_to_idx)
+      scores.append(score_method)
+
 
     use_scoring_for_early_stopping = metadata.get(
         "use_scoring_for_early_stopping", True
@@ -1392,10 +1928,11 @@ def task_predictions(
     # Model selection
     confs = list(ParameterGrid(final_grid))
     random.shuffle(confs)
-
+    #Bug fix: Grid point shows more than available combinations
+    grid_points = min(len(confs), grid_points)
     grid_point_results = []
     for confi, conf in tqdm(enumerate(confs[:grid_points]), desc="grid"):
-        logger.info(f"Grid point {confi+1} of {grid_points}: {conf}")
+        logger.info(f"Grid point {confi + 1} of {grid_points}: {conf}")
         grid_point_result = task_predictions_train(
             embedding_path=embedding_path,
             embedding_size=embedding_size,
@@ -1415,6 +1952,22 @@ def task_predictions(
         grid_point_results.append(grid_point_result)
         print_scores(grid_point_results, embedding_path, logger)
 
+        # Sort to find the current best result
+        sorted_results = sort_grid_points(grid_point_results)
+        best_current_result = sorted_results[0]
+
+        # Release memory for all models that are NOT the current best.
+        # This clears the Trainer -> DataLoader -> Dataset -> RAM reference chain.
+        for result in grid_point_results:
+            if result is not best_current_result:
+                result.trainer = None
+                result.predictor = None
+        
+        # Force Python's garbage collector to release the memory immediately
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
     # Use the best hyperparameters to train models for remaining folds,
     # then compute test scores using the resulting models
     grid_point_results = sort_grid_points(grid_point_results)
@@ -1430,7 +1983,7 @@ def task_predictions(
     # from the grid search.
     split_grid_points = [best_grid_point]
     for spliti, split in tqdm(enumerate(data_splits[1:]), desc="split"):
-        logger.info(f"Training split {spliti+2} of {len(data_splits)}: {split}")
+        logger.info(f"Training split {spliti + 2} of {len(data_splits)}: {split}")
         grid_point_result = task_predictions_train(
             embedding_path=embedding_path,
             embedding_size=embedding_size,
@@ -1504,22 +2057,6 @@ def task_predictions(
     )
     logger.info(f"Final Test Results: {json.dumps(test_results)}")
 
-    # We no longer have best_predictor, the predictor is
-    # loaded by trainer.test and then disappears
-    """
-    # Cache predictions for secondary sanity-check evaluation
-    if metadata["embedding_type"] == "event":
-        json.dump(
-            best_predictor.test_predicted_events,
-            embedding_path.joinpath("test.predictions.json").open("w"),
-            indent=4,
-        )
-    pickle.dump(
-        best_predictor.test_predicted_labels,
-        open(embedding_path.joinpath("test.predicted-labels.pkl"), "wb"),
-    )
-    """
-
 
 # This is for the RIR localization predictions.
 def rir_localization_predictions(
@@ -1543,7 +2080,7 @@ def rir_localization_predictions(
     metadata["prediction_type"] = prediction_type
     # We do not have labels, so passy a dummy label_to_idx variable.
     scores = [
-        available_scores[score](label_to_idx=dict(), maximize = False)
+        available_scores[score](label_to_idx=dict(), maximize=False)
         for score in metadata["evaluation"]
     ]
 
@@ -1585,7 +2122,7 @@ def rir_localization_predictions(
 
     grid_point_results = []
     for confi, conf in tqdm(enumerate(confs[:grid_points]), desc="grid"):
-        logger.info(f"Grid point {confi+1} of {grid_points}: {conf}")
+        logger.info(f"Grid point {confi + 1} of {grid_points}: {conf}")
         grid_point_result = task_predictions_train(
             embedding_path=embedding_path,
             embedding_size=embedding_size,
@@ -1600,11 +2137,26 @@ def rir_localization_predictions(
             in_memory=in_memory,
             deterministic=deterministic,
             task=metadata["prediction_type"],
-            random_probe=random_probe
+            random_probe=random_probe,
         )
         logger.info(f" result: {grid_point_result}")
         grid_point_results.append(grid_point_result)
         print_scores(grid_point_results, embedding_path, logger)
+
+        # Sort to find the current best result
+        sorted_results = sort_grid_points(grid_point_results)
+        best_current_result = sorted_results[0]
+
+        # Release memory for non-best models
+        for result in grid_point_results:
+            if result is not best_current_result:
+                result.trainer = None
+                result.predictor = None
+        
+        # Force garbage collection
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
 
     # Use the best hyperparameters to train models for remaining folds,
     # then compute test scores using the resulting models
@@ -1621,7 +2173,7 @@ def rir_localization_predictions(
     # from the grid search.
     split_grid_points = [best_grid_point]
     for spliti, split in tqdm(enumerate(data_splits[1:]), desc="split"):
-        logger.info(f"Training split {spliti+2} of {len(data_splits)}: {split}")
+        logger.info(f"Training split {spliti + 2} of {len(data_splits)}: {split}")
         grid_point_result = task_predictions_train(
             embedding_path=embedding_path,
             embedding_size=embedding_size,
@@ -1636,7 +2188,7 @@ def rir_localization_predictions(
             in_memory=in_memory,
             deterministic=deterministic,
             task=metadata["prediction_type"],
-            random_probe=random_probe
+            random_probe=random_probe,
         )
         split_grid_points.append(grid_point_result)
         logger.info(
@@ -1659,7 +2211,9 @@ def rir_localization_predictions(
             task=metadata["prediction_type"],
         )
 
-        prediction_file = embedding_path.joinpath(f"{test_fold_str}.predictions-localization.pkl")
+        prediction_file = embedding_path.joinpath(
+            f"{test_fold_str}.predictions-localization.pkl"
+        )
         with open(prediction_file, "wb") as fp:
             pickle.dump(split_grid_points[i].predictor.test_predictions, fp)
 
@@ -1695,7 +2249,7 @@ def rir_localization_predictions(
             json.dumps(test_results, indent=4)
         )
     else:
-        open(embedding_path.joinpath("test.predicted-scores-localization.json"), "wt").write(
-            json.dumps(test_results, indent=4)
-        )
+        open(
+            embedding_path.joinpath("test.predicted-scores-localization.json"), "wt"
+        ).write(json.dumps(test_results, indent=4))
     logger.info(f"Final Test Results: {json.dumps(test_results)}")

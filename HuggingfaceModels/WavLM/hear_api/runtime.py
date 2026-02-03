@@ -47,11 +47,9 @@ class RuntimeWavLM(torch.nn.Module):
         return self.feature_extractor(batch_audio)
 
     def audio2feats(self, audio):
-        # This makes sure that audios are one channel.
-        x = self.to_feature(audio)
         # This resamples/pads etc 
         audio = self.extractor(
-            x, 
+            audio, 
             sampling_rate=16_000, 
             return_tensors="pt",
             padding="longest",
@@ -68,6 +66,8 @@ class RuntimeWavLM(torch.nn.Module):
         return embeddings
     
     def get_timestamp_embeddings(self, audio):
+        # This makes sure that audios are one channel.
+        audio = self.to_feature(audio)
         features = self.audio2feats(audio)
         # Assert audio is of correct shape
         if features.ndim != 2:
@@ -78,8 +78,9 @@ class RuntimeWavLM(torch.nn.Module):
         self.model.eval()
         with torch.no_grad():
             embeddings = self.model(features).last_hidden_state
-
+            print(audio.shape, embeddings.shape)
         ts = get_timestamps(self.sample_rate, audio.shape[0], audio.shape[-1], embeddings)
+        print(ts)
         assert ts.shape[-1] == embeddings.shape[1]
         return embeddings, ts 
 

@@ -22,7 +22,7 @@ def runcmd(cmd):
     os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu)
     os.system(cmd)
     end = time.time()
-    print(f"\n\n\nDONE {end-start} sec: {cmd}\n\n\n")
+    print(f"\n\n\nDONE {end - start} sec: {cmd}\n\n\n")
     sys.stdout.flush()
 
 

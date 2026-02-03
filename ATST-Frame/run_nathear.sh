@@ -9,7 +9,7 @@
 #SBATCH --output=nathear/slurm_output_%A_%a.out
 #SBATCH --array=0-10
 
-
+SLURM_ARRAY_TASK_ID=8
 task_dirs=(
 /projects/0/prjs1338/tasks_noisy_ambisonics
 /projects/0/prjs1261/tasks_noisy_ambisonics

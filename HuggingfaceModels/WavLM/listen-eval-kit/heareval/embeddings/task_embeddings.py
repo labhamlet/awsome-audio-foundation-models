@@ -28,11 +28,12 @@ import pickle
 import random
 import shutil
 import torchaudio
+
 # For now need to import this, otherwise we wont find the models.
 # Later publish it to pypi.
-import sys 
-import os
-sys.path.append(os.path.abspath("../../Wav2Vec2.0"))
+import sys
+
+sys.path.append("../../WavLM")
 from importlib import import_module
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -87,7 +88,7 @@ class Embedding:
             self.model.to(self.device)
         else:
             raise TypeError(f"Unsupported model type received: {type(self.model)}")
-            
+
     @property
     def name(self):
         # TODO: would be nice to include version in this string, a versioned string.
@@ -184,19 +185,19 @@ class AudioFileDataset(Dataset):
         audio_path = self.audio_dir.joinpath(self.filenames[idx])
         audio, sr = sf.read(str(audio_path), dtype=np.float32)
         assert sr == self.sample_rate
-        return audio, self.filenames[idx]
+        return audio, self.filenames[idx], (max(audio.shape) / sr) * 1000
 
 
 def get_dataloader_for_embedding(
-    data: Dict,  audio_dir: Path, embedding: Embedding, batch_size: int = 64
+    data: Dict, audio_dir: Path, embedding: Embedding, batch_size: int = 64
 ):
     if embedding.type == TORCH or embedding.type == TENSORFLOW:
         # RIRDIR and NOISEDIR can be None!
         # RIRDIR and NOISEDIR can be None!
         return DataLoader(
-            AudioFileDataset(data = data, 
-                             audio_dir= audio_dir, 
-                             sample_rate=embedding.sample_rate),
+            AudioFileDataset(
+                data=data, audio_dir=audio_dir, sample_rate=embedding.sample_rate
+            ),
             batch_size=batch_size,
             shuffle=False,
         )
@@ -230,8 +231,7 @@ def save_timestamp_embedding_and_labels(
         json.dump(timestamps[i].tolist(), open(f"{out_file}.timestamps.json", "w"))
         json.dump(labels[i], open(f"{out_file}.target-labels.json", "w"), indent=4)
 
-
-def get_labels_for_timestamps(labels: List, timestamps: np.ndarray) -> List:
+def get_labels_for_timestamps(labels: List, timestamps: np.ndarray, source: Optional[str]) -> List:
     # -> List[List[List[str]]]:
     # -> List[List[str]]:
     # TODO: Is this function redundant?
@@ -244,13 +244,29 @@ def get_labels_for_timestamps(labels: List, timestamps: np.ndarray) -> List:
         tree = IntervalTree()
         # Add all events to the label tree
         for event in label:
-            # We add 0.0001 so that the end also includes the event
-            tree.addi(event["start"], event["end"] + 0.0001, event["label"])
+            if "direction" in event:
+                assert source is not None, "Got source None, please pass source_dyamics: (dynamic, static) in metadata"
+            if "direction" in event and source == "static":
+                tree.addi(event["start"], event["end"], (event["label"], event["direction"]))
+            elif "direction" in event and source == "dynamic":
+                assert "source_idx" in event, "Events do not contain a source idx"
+                tree.addi(event["start"], event["end"], (event["label"], event["direction"]))
+            elif "direction" not in event and source is None:
+                #adding 0.0001 so that end includes the event, but is it really necessary?
+                #This is from hear-eval-kit
+                tree.addi(event["start"], event["end"] + 0.0001, event["label"])
+            else:
+                raise ValueError("Got direction and source not matching")
 
         labels_for_sound = []
         # Update the binary vector of labels with intervals for each timestamp
+        # interval labels now is not only only, but could also be Tuple of str and List[float]
+        # List of float corresponds to the direction labels of the events.
         for j, t in enumerate(timestamps[i]):
-            interval_labels: List[str] = [interval.data for interval in tree[t]]
+            interval_labels: List[str | Tuple[str, List[float]]] = [interval.data for interval in tree[t]]
+            #When we have a dynamic source, we select only one event of the same class!
+            #Or not, because this will actually mess-up with the evaluation code.
+            #We do have a hungarian algorithm that will solve the assignment issue in the eval code!
             labels_for_sound.append(interval_labels)
             # If we want to store the timestamp too
             # labels_for_sound.append([float(t), interval_labels])
@@ -268,6 +284,7 @@ def memmap_embeddings(
     split_name: str,
     embed_task_dir: Path,
     split_data: Dict,
+    audio_lengths : Optional[Dict[str, float]]
 ):
     """
     Memmap all the embeddings to one file, and pickle all the labels.
@@ -329,7 +346,7 @@ def memmap_embeddings(
                 assert isinstance(lbl, list)
             else:
                 NotImplementedError(
-                    "Only multiclass and multilabel prediction types"
+                    "Only multiclass, multilabel prediction types"
                     f"implemented for scene embeddings. Received {metadata['prediction_type']}"
                 )
 
@@ -346,9 +363,9 @@ def memmap_embeddings(
             )
             slug = str(embedding_file).replace(".embedding.npy", "")
             filename_timestamps += [(slug, timestamp) for timestamp in timestamps]
-            assert emb.shape[0] == len(
-                timestamps
-            ), f"{emb.shape[0]} != {len(timestamps)}"
+            assert emb.shape[0] == len(timestamps), (
+                f"{emb.shape[0]} != {len(timestamps)}"
+            )
             assert len(lbl) == len(timestamps), f"{len(lbl)} != {len(timestamps)}"
 
             idx += emb.shape[0]
@@ -365,13 +382,19 @@ def memmap_embeddings(
             "wb",
         ),
     )
-    
+
     if metadata["embedding_type"] == "event":
         assert len(labels) == len(filename_timestamps)
+        assert len(audio_lengths) != 0
+
         open(
             embed_task_dir.joinpath(f"{split_name}.filename-timestamps.json"),
             "wt",
         ).write(json.dumps(filename_timestamps, indent=4))
+        open(
+            embed_task_dir.joinpath(f"{split_name}.filename-lengths-ms.json"),
+            "wt",
+        ).write(json.dumps(audio_lengths, indent=4))
 
 
 def task_embeddings(
@@ -396,7 +419,7 @@ def task_embeddings(
 
     for split in metadata["splits"]:
         print(f"Getting embeddings for split: {split}")
-
+        audio_lengths = {}
         split_path = task_path.joinpath(f"{split}.json")
         assert split_path.is_file()
 
@@ -414,16 +437,7 @@ def task_embeddings(
         # model and largest audio files we have.
         estimated_batch_size: int
         if metadata["sample_duration"] is not None:
-            estimated_batch_size = max(
-                1,
-                int(
-                    # 0.9
-                    # One of the submissions needs smaller batches
-                    0.7
-                    * (120 / metadata["sample_duration"])
-                    * (16000 / embedding.sample_rate)
-                ),
-            )
+            estimated_batch_size = max(1, 256)
         else:
             # If the sample duration is None, we use a batch size of 1 as the audio
             # files will of different length and the model cannot be run with
@@ -432,9 +446,9 @@ def task_embeddings(
         print(f"Estimated batch size = {estimated_batch_size}")
         split_data = json.load(split_path.open())
         dataloader = get_dataloader_for_embedding(
-            data=split_data, 
-            audio_dir=audio_dir, 
-            embedding=embedding, 
+            data=split_data,
+            audio_dir=audio_dir,
+            embedding=embedding,
             batch_size=estimated_batch_size,
         )
 
@@ -442,7 +456,7 @@ def task_embeddings(
         if not os.path.exists(outdir):
             os.makedirs(outdir)
 
-        for audios, filenames in tqdm(dataloader):
+        for audios, filenames, lengths in tqdm(dataloader):
             labels = [split_data[file] for file in filenames]
 
             if metadata["embedding_type"] == "scene":
@@ -453,7 +467,11 @@ def task_embeddings(
                 embeddings, timestamps = embedding.get_timestamp_embedding_as_numpy(
                     audios
                 )
-                labels = get_labels_for_timestamps(labels, timestamps)
+
+                for audio, filename, length in zip(audios, filenames, lengths):
+                    audio_lengths[filename] = length.item()
+
+                labels = get_labels_for_timestamps(labels, timestamps, metadata.get("source_dynamics", None))
                 assert len(labels) == len(filenames)
                 assert len(labels[0]) == len(timestamps[0])
                 save_timestamp_embedding_and_labels(
@@ -464,4 +482,4 @@ def task_embeddings(
                     f"Unknown embedding type: {metadata['embedding_type']}"
                 )
 
-        memmap_embeddings(outdir, prng, metadata, split, embed_task_dir, split_data)
+        memmap_embeddings(outdir, prng, metadata, split, embed_task_dir, split_data, audio_lengths)

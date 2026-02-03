@@ -3,59 +3,47 @@
 #SBATCH --gpus=1
 #SBATCH --job-name=MWMAE
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=18
 #SBATCH --exclude=gcn118
 #SBATCH --time=02:00:00
-#SBATCH --output=hear/slurm_output_%A_%a.out
-#SBATCH --array=3   
+#SBATCH --output=steps/slurm_output_%A_%a.out
+#SBATCH --array=0-6
 
-SLURM_ARRAY_TASK_ID=8
+
+task_names=(tau2018-ov1-v1.0.0-full
+tau2018-ov2-v1.0.0-full
+tau2018-ov3-v1.0.0-full
+tau2019-v1.0.0-full
+tau2020-v1.0.0-full
+tau2021-v1.0.0-full
+starss23-v1.0.0-full)
+
 task_dirs=(
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1261/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks)
-
-task_names=(beijing_opera-v1.0-hear2021-full
-dcase2016_task2-hear2021-full
-fsd50k-v1.0-full
-esc50-v2.0.0-full
-libricount-v1.0.0-hear2021-full
-speech_commands-v0.0.2-5h
-mridangam_stroke-v1.5-full
-mridangam_tonic-v1.5-full
-tfds_crema_d-1.0.0-full
-nsynth_pitch-v2.2.3-5h
-vox_lingua_top10-hear2021-full
+/projects/0/prjs1338/realsed
+/projects/0/prjs1338/realsed
+/projects/0/prjs1338/realsed
+/projects/0/prjs1338/realsed
+/projects/0/prjs1338/realsed
+/projects/0/prjs1338/realsed
+/projects/0/prjs1338/realsed
 )
 
-cd ~/phd/awsome-audio-foundation-models/ATST-Frame
+cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/WavLM
 module load 2023
 module load Anaconda3/2023.07-2
-source activate atst-eval
+source activate hear-other-models-eval
 cd listen-eval-kit
 
-embeddings_dir=/projects/0/prjs1338/ATSTFrameEmbeddingsHear
+embeddings_dir=/projects/0/prjs1338/WavLMmbeddingsHear
 score_dir=hear_scores
 task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
 task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}
 
-model_name=hear_configs.atst_frame
-model_size=base
+model_name=hear_configs.wavlm
+model_size=base-plus
 model_options="{\"model_size\": \"$model_size\"}"
 
 python3 -m heareval.embeddings.runner "$model_name" --tasks-dir $task_dir --task "$task_name" --embeddings-dir $embeddings_dir --model-options "$model_options"
-source deactivate
-source activate hear-lightning-eval
-python3 -m heareval.predictions.runner $embeddings_dir/$model_name-model-size=$model_size/$task_name --grid fast
+python3 -m heareval.predictions.runner $embeddings_dir/$model_name-model-size=$model_size/$task_name
 
 mkdir -p /projects/0/prjs1338/$score_dir/$model_name-model-size=$model_size/$task_name
 

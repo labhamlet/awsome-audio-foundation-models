@@ -1,7 +1,4 @@
 import torch
-import torchaudio
-
-
 
 class FeatureExtractor(torch.nn.Module):
     def __init__(

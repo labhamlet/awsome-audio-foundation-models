@@ -5,10 +5,10 @@ predictions.
 """
 
 import json
+import logging
 import random
 import sys
 import time
-import logging
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -17,8 +17,10 @@ import torch
 from tqdm import tqdm
 
 import heareval.gpu_max_mem as gpu_max_mem
-from heareval.predictions.task_predictions import task_predictions, rir_localization_predictions
-
+from heareval.predictions.task_predictions import (
+    rir_localization_predictions,
+    task_predictions,
+)
 
 # Cache this so the logger object isn't recreated,
 # and we get accurate "relativeCreated" times.
@@ -93,11 +95,22 @@ def get_logger(task_name: str, log_path: Path) -> logging.Logger:
     help="Shuffle tasks? (Default: False)",
     type=click.BOOL,
 )
-@click.option('--localization', 
-              default = "",
-              type=click.Choice(["",'cartesian-regression', 'cartesian-z-regression', 'distance-regression', 'polar-regression', 'polar-classification']),
-              multiple=False,
-              help = "Do RIR localization from the embeddings")
+@click.option(
+    "--localization",
+    default="",
+    type=click.Choice(
+        [
+            "",
+            "cartesian-regression",
+            "cartesian-z-regression",
+            "distance-regression",
+            "polar-regression",
+            "polar-classification",
+        ]
+    ),
+    multiple=False,
+    help="Do RIR localization from the embeddings",
+)
 @click.option(
     "--random-probe",
     default=False,
@@ -115,8 +128,9 @@ def runner(
     localization: str = "",
     random_probe: bool = False,
 ) -> None:
-    import os 
-    os.environ["CUBLAS_WORKSPACE_CONFIG"]=":16:8"
+    import os
+
+    os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":16:8"
 
     if gpus is not None:
         gpus = json.loads(gpus)
@@ -129,7 +143,7 @@ def runner(
         task_path = Path(task_dir)
         if not task_path.is_dir():
             raise ValueError(f"{task_path} should be a directory")
-        
+
         if random_probe:
             done_file = task_path.joinpath("prediction-done-random.json")
         else:
@@ -172,8 +186,8 @@ def runner(
                 deterministic=deterministic,
                 grid=grid,
                 logger=logger,
-                prediction_type = localization,
-                random_probe=random_probe
+                prediction_type=localization,
+                random_probe=random_probe,
             )
         else:
             task_predictions(
@@ -217,12 +231,14 @@ def runner(
 
 
 if __name__ == "__main__":
-    seed = 42 
-    import random
-    import numpy as np 
+    seed = 42
     import os
+    import random
+
+    import numpy as np
+
     random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
