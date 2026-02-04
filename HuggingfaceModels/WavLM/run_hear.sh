@@ -47,17 +47,15 @@ score_dir=hear_scores
 task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
 task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}
 
-model_name=hear_configs.wavlm
-model_size=base-plus
-model_options="{\"model_size\": \"$model_size\"}"
+model_name=hear_configs.wavlm_plus
 
 python3 -m heareval.embeddings.runner "$model_name" --tasks-dir $task_dir --task "$task_name" --embeddings-dir $embeddings_dir --model-options "$model_options"
-python3 -m heareval.predictions.runner $embeddings_dir/$model_name-model-size=$model_size/$task_name
+python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name
 
-mkdir -p /projects/0/prjs1338/$score_dir/$model_name-model-size=$model_size/$task_name
+mkdir -p /projects/0/prjs1338/$score_dir/$model_name/$task_name
 
-mv $embeddings_dir/$model_name-model-size=$model_size/$task_name/test.predicted-scores.json  /projects/0/prjs1338/$score_dir/$model_name-model-size=$model_size/$task_name
-mv $embeddings_dir/$model_name-model-size=$model_size/$task_name/*predictions.pkl /projects/0/prjs1338/$score_dir/$model_name-model-size=$model_size/$task_name
-mv $embeddings_dir/$model_name-model-size=$model_size/$task_name/*embeddings.npy /projects/0/prjs1338/$score_dir/$model_name-model-size=$model_size/$task_name
+mv $embeddings_dir/$model_name/$task_name/test.predicted-scores.json  /projects/0/prjs1338/$score_dir/$model_name/$task_name
+mv $embeddings_dir/$model_name/$task_name/*predictions.pkl /projects/0/prjs1338/$score_dir/$model_name/$task_name
+mv $embeddings_dir/$model_name/$task_name/*embeddings.npy /projects/0/prjs1338/$score_dir/$model_name/$task_name
 
-rm -r -d -f $embeddings_dir/$model_name-model-size=$model_size/$task_name
+rm -r -d -f $embeddings_dir/$model_name/$task_name

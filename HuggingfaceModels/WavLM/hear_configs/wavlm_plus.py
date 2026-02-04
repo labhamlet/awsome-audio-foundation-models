@@ -1,7 +1,7 @@
 from hear_api.runtime import RuntimeWavLM
 
 def load_model(*args, **kwargs):
-    model_size = "base"
+    model_size = "base-plus"
     model = RuntimeWavLM(model_size=model_size)
     return model
 
