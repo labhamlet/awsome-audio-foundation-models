@@ -1,7 +1,7 @@
 from hear_api.runtime import RuntimeWav2Vec2
 
 def load_model(*args, **kwargs):
-    model_size = "base"
+    model_size = "large"
     model = RuntimeWav2Vec2(model_size=model_size)
     return model
 

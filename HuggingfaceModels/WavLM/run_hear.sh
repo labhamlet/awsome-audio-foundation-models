@@ -49,7 +49,7 @@ task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}
 
 model_name=hear_configs.wavlm_plus
 
-python3 -m heareval.embeddings.runner "$model_name" --tasks-dir $task_dir --task "$task_name" --embeddings-dir $embeddings_dir --model-options "$model_options"
+python3 -m heareval.embeddings.runner "$model_name" --tasks-dir $task_dir --task "$task_name" --embeddings-dir $embeddings_dir
 python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name
 
 mkdir -p /projects/0/prjs1338/$score_dir/$model_name/$task_name
