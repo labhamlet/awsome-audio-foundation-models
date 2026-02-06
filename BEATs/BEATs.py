@@ -7,7 +7,7 @@
 # https://github.com/pytorch/fairseq
 # --------------------------------------------------------
 
-
+import time 
 import torch
 import torch.nn as nn
 from torch.nn import LayerNorm
@@ -67,7 +67,6 @@ class BEATsConfig:
     def update(self, cfg: dict):
         self.__dict__.update(cfg)
 
-
 class BEATs(nn.Module):
     def __init__(
             self,
@@ -77,7 +76,6 @@ class BEATs(nn.Module):
         logger.info(f"BEATs Config: {cfg.__dict__}")
 
         self.cfg = cfg
-
         self.embed = cfg.embed_dim
         self.post_extract_proj = (
             nn.Linear(self.embed, cfg.encoder_embed_dim)
@@ -154,12 +152,10 @@ class BEATs(nn.Module):
             features = self.post_extract_proj(features)
 
         x = self.dropout_input(features)
-
         x, layer_results = self.encoder(
             x,
-            padding_mask=padding_mask,
+            padding_mask=None,
         )
-
         if self.predictor is not None:
             x = self.predictor_dropout(x)
             logits = self.predictor(x)

@@ -1339,7 +1339,6 @@ available_scores: Dict[str, Callable] = {
     "event_onset_200ms_fms": partial(
         EventBasedScore,
         name="event_onset_200ms_fms",
-        # If first score will be used as the primary score for this metric
         scores=("f_measure", "precision", "recall"),
         params={"evaluate_onset": True, "evaluate_offset": False, "t_collar": 0.2},
     ),

@@ -11,28 +11,28 @@ class RuntimeWavLM(torch.nn.Module):
         super().__init__()
 
         if model_size == "base":
-            self.model = AutoModel.from_pretrained("microsoft/wavlm-base")
+            self.model = AutoModel.from_pretrained("microsoft/wavlm-base", cache_dir="/projects/0/prjs1338/hf_models")
             # sample rate and embedding sizes are required model attributes for the HEAR API
             self.embedding_size = 768
             self.scene_embedding_size = self.embedding_size
             self.timestamp_embedding_size = self.embedding_size
-            self.extractor = AutoFeatureExtractor.from_pretrained("microsoft/wavlm-base")
+            self.extractor = AutoFeatureExtractor.from_pretrained("microsoft/wavlm-base", cache_dir="/projects/0/prjs1338/hf_models")
 
         elif model_size == "base-plus":
-            self.model = AutoModel.from_pretrained("microsoft/wavlm-base-plus")
+            self.model = AutoModel.from_pretrained("microsoft/wavlm-base-plus", cache_dir="/projects/0/prjs1338/hf_models")
             # sample rate and embedding sizes are required model attributes for the HEAR API
             self.embedding_size = 768
             self.scene_embedding_size = self.embedding_size
             self.timestamp_embedding_size = self.embedding_size
-            self.extractor = AutoFeatureExtractor.from_pretrained("microsoft/wavlm-base-plus")
+            self.extractor = AutoFeatureExtractor.from_pretrained("microsoft/wavlm-base-plus", cache_dir="/projects/0/prjs1338/hf_models")
 
         elif model_size == "large":
-            self.model = AutoModel.from_pretrained("microsoft/wavlm-large")
+            self.model = AutoModel.from_pretrained("microsoft/wavlm-large", cache_dir="/projects/0/prjs1338/hf_models")
             # sample rate and embedding sizes are required model attributes for the HEAR API
             self.embedding_size = 1024
             self.scene_embedding_size = self.embedding_size
             self.timestamp_embedding_size = self.embedding_size
-            self.extractor = AutoFeatureExtractor.from_pretrained("microsoft/wavlm-large")
+            self.extractor = AutoFeatureExtractor.from_pretrained("microsoft/wavlm-large", cache_dir="/projects/0/prjs1338/hf_models")
 
         else: 
             raise Exception("Wrong model size")
@@ -80,7 +80,6 @@ class RuntimeWavLM(torch.nn.Module):
             embeddings = self.model(features).last_hidden_state
             print(audio.shape, embeddings.shape)
         ts = get_timestamps(self.sample_rate, audio.shape[0], audio.shape[-1], embeddings)
-        print(ts)
         assert ts.shape[-1] == embeddings.shape[1]
         return embeddings, ts 
 
