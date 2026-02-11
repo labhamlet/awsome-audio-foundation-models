@@ -4,7 +4,7 @@ import torch
 from .feature_helper import FeatureExtractor
 from transformers import AutoModel, AutoFeatureExtractor
 
-class RuntimeHubertAS(torch.nn.Module):
+class RuntimeHuBERTAS(torch.nn.Module):
     def __init__(self, 
                  model_size, 
                  **kwargs) -> None:

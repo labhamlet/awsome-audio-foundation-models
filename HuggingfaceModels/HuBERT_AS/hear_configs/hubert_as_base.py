@@ -1,8 +1,8 @@
-from hear_api.runtime import RuntimeHuBERT
+from hear_api.runtime import RuntimeHuBERTAS
 
 def load_model(*args, **kwargs):
     model_size = "base_as"
-    model = RuntimeHuBERT(model_size=model_size)
+    model = RuntimeHuBERTAS(model_size=model_size)
     return model
 
 def get_scene_embeddings(audio, model):

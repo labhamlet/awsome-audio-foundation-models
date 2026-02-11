@@ -1,1 +1,1 @@
-from .runtime import RuntimeHuBERT
+from .runtime import RuntimeHuBERTAS
