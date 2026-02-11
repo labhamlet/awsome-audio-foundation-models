@@ -36,13 +36,13 @@ vox_lingua_top10-hear2021-full
 )
 
 
-cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/HuBERT
+cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/HuBERT_AS
 module load 2023
 module load Anaconda3/2023.07-2
 source activate hear-other-models-eval
 cd listen-eval-kit
 
-embeddings_dir=/projects/0/prjs1338/HuBERTEmbeddingsHear
+embeddings_dir=/projects/0/prjs1338/HuBERTASEmbeddingsHear
 score_dir=hear_scores
 task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
 task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}

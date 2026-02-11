@@ -7,34 +7,35 @@
 #SBATCH --exclude=gcn118
 #SBATCH --time=02:00:00
 #SBATCH --output=hear/slurm_output_%A_%a.out
-#SBATCH --array=3
+#SBATCH --array=0
 
-SLURM_ARRAY_TASK_ID=3
 task_dirs=(
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1261/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks)
+# /projects/0/prjs1338/tasks
+/projects/0/prjs1261/tasks)
+# /projects/0/prjs1261/tasks
+# /projects/0/prjs1338/tasks
+# /projects/0/prjs1338/tasks
+# /projects/0/prjs1338/tasks
+# /projects/0/prjs1338/tasks
+# /projects/0/prjs1338/tasks
+# /projects/0/prjs1338/tasks
+# /projects/0/prjs1338/tasks
+# /projects/0/prjs1338/tasks)
 
-task_names=(beijing_opera-v1.0-hear2021-full
-dcase2016_task2-hear2021-full
+task_names=(
+# beijing_opera-v1.0-hear2021-full
+# dcase2016_task2-hear2021-full
 fsd50k-v1.0-full
-esc50-v2.0.0-full
-libricount-v1.0.0-hear2021-full
-speech_commands-v0.0.2-5h
-mridangam_stroke-v1.5-full
-mridangam_tonic-v1.5-full
-tfds_crema_d-1.0.0-full
-nsynth_pitch-v2.2.3-5h
-vox_lingua_top10-hear2021-full
+# esc50-v2.0.0-full
+# libricount-v1.0.0-hear2021-full
+# speech_commands-v0.0.2-5h
+# mridangam_stroke-v1.5-full
+# mridangam_tonic-v1.5-full
+# tfds_crema_d-1.0.0-full
+# nsynth_pitch-v2.2.3-5h
+# vox_lingua_top10-hear2021-full
 )
+
 
 
 cd ~/phd/awsome-audio-foundation-models/ATST-Clip
