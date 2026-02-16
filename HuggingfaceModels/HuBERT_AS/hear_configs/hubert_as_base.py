@@ -1,7 +1,7 @@
 from hear_api.runtime import RuntimeHuBERTAS
 
 def load_model(*args, **kwargs):
-    model_size = "base_as"
+    model_size = "base"
     model = RuntimeHuBERTAS(model_size=model_size)
     return model
 
