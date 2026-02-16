@@ -1,16 +1,15 @@
 #!/bin/bash
 #SBATCH --partition=gpu_a100
 #SBATCH --gpus=1
-#SBATCH --job-name=MWMAE
+#SBATCH --job-name=Data2Vec
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
 #SBATCH --exclude=gcn118
 #SBATCH --time=02:00:00
 #SBATCH --output=hear/slurm_output_%A_%a.out
-#SBATCH --array=0-11
+#SBATCH --array=1-2
 
 grids=(
-default
 default
 fast
 default
@@ -55,17 +54,18 @@ cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/Data2Vec
 module load 2023
 module load Anaconda3/2023.07-2
 source activate hear-other-models-eval
-cd listen-eval-kit
+cd hear-eval-kit
 
 embeddings_dir=/projects/0/prjs1338/Data2VecEmbeddingsHear
 score_dir=hear_scores
 task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
 task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}
+grid=${grids[$SLURM_ARRAY_TASK_ID]}
 
-model_name=hear_configs.data2vec_bases
+model_name=hear_configs.data2vec_base
 
 python3 -m heareval.embeddings.runner "$model_name" --tasks-dir $task_dir --task "$task_name" --embeddings-dir $embeddings_dir
-python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name
+python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name --grid $grid
 
 mkdir -p ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
 

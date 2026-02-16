@@ -1,13 +1,26 @@
 #!/bin/bash
 #SBATCH --partition=gpu_a100
 #SBATCH --gpus=1
-#SBATCH --job-name=MWMAE
+#SBATCH --job-name=HuBERTAS
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
 #SBATCH --exclude=gcn118
 #SBATCH --time=02:00:00
 #SBATCH --output=hear/slurm_output_%A_%a.out
-#SBATCH --array=10
+#SBATCH --array=0-10
+
+grids=(
+default
+fast
+default
+default
+default
+default
+default
+default
+default
+default
+)
 
 task_dirs=(
 /projects/0/prjs1338/tasks
@@ -20,9 +33,11 @@ task_dirs=(
 /projects/0/prjs1338/tasks
 /projects/0/prjs1338/tasks
 /projects/0/prjs1338/tasks
-/projects/0/prjs1338/tasks)
+/projects/0/prjs1338/tasks
+)
 
-task_names=(beijing_opera-v1.0-hear2021-full
+task_names=(
+beijing_opera-v1.0-hear2021-full
 dcase2016_task2-hear2021-full
 fsd50k-v1.0-full
 esc50-v2.0.0-full
@@ -35,7 +50,6 @@ nsynth_pitch-v2.2.3-5h
 vox_lingua_top10-hear2021-full
 )
 
-
 cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/HuBERT_AS
 module load 2023
 module load Anaconda3/2023.07-2
@@ -46,11 +60,12 @@ embeddings_dir=/projects/0/prjs1338/HuBERTASEmbeddingsHear
 score_dir=hear_scores
 task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
 task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}
+grid=${grids[$SLURM_ARRAY_TASK_ID]}
 
 model_name=hear_configs.hubert_as_base
 
 python3 -m heareval.embeddings.runner "$model_name" --tasks-dir $task_dir --task "$task_name" --embeddings-dir $embeddings_dir
-python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name
+python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name --grid $grid
 
 mkdir -p /projects/0/prjs1338/$score_dir/$model_name/$task_name
 
