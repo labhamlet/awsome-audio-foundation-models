@@ -1,0 +1,42 @@
+{
+    "test": {
+        "test_loss": 0.06120218709111214,
+        "test_score": 0.46173468232154846,
+        "test_event_onset_200ms_fms": 0.46173468232154846,
+        "test_event_onset_200ms_fms_f_measure": 0.46173468232154846,
+        "test_event_onset_200ms_fms_precision": 0.581993579864502,
+        "test_event_onset_200ms_fms_recall": 0.3826638460159302,
+        "test_segment_1s_er": 0.5589519739151001,
+        "test_segment_1s_er_error_rate": 0.5589519739151001,
+        "validation_score": 0.531130850315094,
+        "epoch": 9,
+        "time_in_min": 1.1974112749099732
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 10,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 2,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_uniform_ at 0x147c91a073a0>",
+        "lr": 0.0001,
+        "max_epochs": 10,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [
+        [
+            "median_filter_ms",
+            250
+        ],
+        [
+            "min_duration",
+            250
+        ]
+    ],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/Data2VecEmbeddingsHear/hear_configs.data2vec_base/dcase2016_task2-hear2021-full"
+}

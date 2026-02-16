@@ -63,12 +63,13 @@ task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
 task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}
 grid=${grids[$SLURM_ARRAY_TASK_ID]}
 
-model_name=hear_configs.hubert_as_base
+model_name=hear_configs.wavjepa
 
 python3 -m heareval.embeddings.runner "$model_name" --tasks-dir $task_dir --task "$task_name" --embeddings-dir $embeddings_dir
 python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name --grid $grid
-mkdir -p /projects/0/prjs1338/$score_dir/$model_name-model-size=$model_size/$task_name
 
-mv $embeddings_dir/$model_name-model-size=$model_size/$task_name/test.predicted-scores.json  /projects/0/prjs1338/$score_dir/$model_name-model-size=$model_size/$task_name
+mkdir -p ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
 
-rm -r -d -f $embeddings_dir/$model_name-model-size=$model_size/$task_name
+mv $embeddings_dir/$model_name/$task_name/test.predicted-scores.json  ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
+
+rm -r -d -f $embeddings_dir/$model_name/$task_name
