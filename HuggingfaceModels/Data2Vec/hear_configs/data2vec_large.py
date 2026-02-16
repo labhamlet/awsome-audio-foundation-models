@@ -1,8 +1,7 @@
 from hear_api.runtime import RuntimeData2Vec
 
 def load_model(*args, **kwargs):
-    model_size = kwargs.get("model_size", "base")
-    model = RuntimeData2Vec(model_size=model_size)
+    model = RuntimeData2Vec(model_size="large")
     return model
 
 def get_scene_embeddings(audio, model):

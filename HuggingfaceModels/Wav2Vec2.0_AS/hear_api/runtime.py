@@ -11,28 +11,20 @@ class RuntimeWav2Vec2(torch.nn.Module):
         super().__init__()
 
         if model_size == "base":
-            self.model = AutoModel.from_pretrained("facebook/wav2vec2-base", cache_dir="/projects/0/prjs1338/hf_models")
+            self.model = AutoModel.from_pretrained("ALM/wav2vec2-base-audioset")
             # sample rate and embedding sizes are required model attributes for the HEAR API
             self.embedding_size = 768
             self.scene_embedding_size = self.embedding_size
             self.timestamp_embedding_size = self.embedding_size
-            self.extractor = AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-base", cache_dir="/projects/0/prjs1338/hf_models")
+            self.extractor = AutoFeatureExtractor.from_pretrained("ALM/wav2vec2-base-audioset")
 
         elif model_size == "large":
-            self.model = AutoModel.from_pretrained("facebook/wav2vec2-large-100k-voxpopuli", cache_dir="/projects/0/prjs1338/hf_models")
+            self.model = AutoModel.from_pretrained("ALM/wav2vec2-large-audioset")
             # sample rate and embedding sizes are required model attributes for the HEAR API
             self.embedding_size = 1024
             self.scene_embedding_size = self.embedding_size
             self.timestamp_embedding_size = self.embedding_size
-            self.extractor = AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-large-100k-voxpopuli", cache_dir="/projects/0/prjs1338/hf_models")
-
-        elif model_size == "robust":
-            self.model = AutoModel.from_pretrained("facebook/wav2vec2-large-robust", cache_dir="/projects/0/prjs1338/hf_models")
-            # sample rate and embedding sizes are required model attributes for the HEAR API
-            self.embedding_size = 1024
-            self.scene_embedding_size = self.embedding_size
-            self.timestamp_embedding_size = self.embedding_size
-            self.extractor = AutoFeatureExtractor.from_pretrained("facebook/wav2vec2-large-robust", cache_dir="/projects/0/prjs1338/hf_models")
+            self.extractor = AutoFeatureExtractor.from_pretrained("ALM/wav2vec2-large-audioset")
 
         else: 
             raise Exception("Wrong model size")

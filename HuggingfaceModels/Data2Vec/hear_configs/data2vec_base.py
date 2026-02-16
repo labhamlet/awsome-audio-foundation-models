@@ -1,8 +1,7 @@
-from hear_api.runtime import RuntimeWav2Vec2
+from hear_api.runtime import RuntimeData2Vec
 
 def load_model(*args, **kwargs):
-    model_size = "robust"
-    model = RuntimeWav2Vec2(model_size=model_size)
+    model = RuntimeData2Vec(model_size="base")
     return model
 
 def get_scene_embeddings(audio, model):
