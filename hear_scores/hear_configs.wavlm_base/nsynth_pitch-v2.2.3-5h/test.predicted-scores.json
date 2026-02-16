@@ -1,0 +1,29 @@
+{
+    "test": {
+        "test_loss": 5.54140567779541,
+        "test_score": 0.1599999964237213,
+        "test_pitch_acc": 0.1599999964237213,
+        "test_chroma_acc": 0.19599999487400055,
+        "validation_score": 0.18199999630451202,
+        "epoch": 62,
+        "time_in_min": 0.1303476055463155
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 2,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x14bc2e176550>",
+        "lr": 0.0032,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/WavLMEmbeddingsHear/hear_configs.wavlm_base/nsynth_pitch-v2.2.3-5h"
+}
