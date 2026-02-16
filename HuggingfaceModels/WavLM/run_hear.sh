@@ -7,7 +7,7 @@
 #SBATCH --exclude=gcn118
 #SBATCH --time=02:00:00
 #SBATCH --output=hear/slurm_output_%A_%a.out
-#SBATCH --array=0
+#SBATCH --array=0-10
 
 grids=(
 default
@@ -71,7 +71,5 @@ python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name --
 mkdir -p ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
 
 mv $embeddings_dir/$model_name/$task_name/test.predicted-scores.json  ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
-mv $embeddings_dir/$model_name/$task_name/*predictions.pkl ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
-mv $embeddings_dir/$model_name/$task_name/*embeddings.npy ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
 
 rm -r -d -f $embeddings_dir/$model_name/$task_name

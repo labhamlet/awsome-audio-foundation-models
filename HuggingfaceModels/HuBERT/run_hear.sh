@@ -70,7 +70,5 @@ python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name --
 mkdir -p ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
 
 mv $embeddings_dir/$model_name/$task_name/test.predicted-scores.json  ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
-mv $embeddings_dir/$model_name/$task_name/*predictions.pkl ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
-mv $embeddings_dir/$model_name/$task_name/*embeddings.npy ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
 
 rm -r -d -f $embeddings_dir/$model_name/$task_name

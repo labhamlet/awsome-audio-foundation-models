@@ -54,7 +54,7 @@ cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/Whisper
 module load 2023
 module load Anaconda3/2023.07-2
 source activate hear-other-models-eval
-cd listen-eval-kit
+cd hear-eval-kit
 
 embeddings_dir=/projects/0/prjs1338/WhisperEmbeddingsHear
 score_dir=hear_scores

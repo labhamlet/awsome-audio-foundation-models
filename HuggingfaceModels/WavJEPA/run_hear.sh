@@ -55,7 +55,7 @@ cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/WavJEPA
 module load 2023
 module load Anaconda3/2023.07-2
 source activate sjepa-eval
-cd listen-eval-kit
+cd hear-eval-kit
 
 embeddings_dir=/projects/0/prjs1338/WavJEPAEbeddingsHear
 score_dir=hear_scores
@@ -70,7 +70,5 @@ python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name --
 mkdir -p /projects/0/prjs1338/$score_dir/$model_name-model-size=$model_size/$task_name
 
 mv $embeddings_dir/$model_name-model-size=$model_size/$task_name/test.predicted-scores.json  /projects/0/prjs1338/$score_dir/$model_name-model-size=$model_size/$task_name
-mv $embeddings_dir/$model_name-model-size=$model_size/$task_name/*predictions.pkl /projects/0/prjs1338/$score_dir/$model_name-model-size=$model_size/$task_name
-mv $embeddings_dir/$model_name-model-size=$model_size/$task_name/*embeddings.npy /projects/0/prjs1338/$score_dir/$model_name-model-size=$model_size/$task_name
 
 rm -r -d -f $embeddings_dir/$model_name-model-size=$model_size/$task_name

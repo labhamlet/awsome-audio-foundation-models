@@ -54,7 +54,7 @@ cd ~/phd/awsome-audio-foundation-models/HuggingfaceModels/Wav2Vec2.0
 module load 2023
 module load Anaconda3/2023.07-2
 source activate hear-other-models-eval
-cd listen-eval-kit
+cd hear-eval-kit
 
 embeddings_dir=/projects/0/prjs1338/Wav2Vec2EmbeddingsHear
 score_dir=hear_scores
@@ -70,7 +70,5 @@ python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name --
 mkdir -p ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
 
 mv $embeddings_dir/$model_name/$task_name/test.predicted-scores.json  ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
-mv $embeddings_dir/$model_name/$task_name/*predictions.pkl ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
-mv $embeddings_dir/$model_name/$task_name/*embeddings.npy ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
 
 rm -r -d -f $embeddings_dir/$model_name/$task_name
