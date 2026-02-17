@@ -1,0 +1,31 @@
+{
+    "test": {
+        "test_loss": 0.06354456394910812,
+        "test_score": 0.5589100250353671,
+        "test_mAP": 0.5589100250353671,
+        "test_d_prime": 2.3043974830676204,
+        "test_aucroc": 0.9322682059335057,
+        "test_top1_acc": 0.3154139518737793,
+        "validation_score": 0.5852916159424926,
+        "epoch": 59,
+        "time_in_min": 2.186221138636271
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 2,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_uniform_ at 0x147113946280>",
+        "lr": 0.00032,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/ATSTFrameEmbeddingsHear/hear_configs.atst_frame-model-size=base/fsd50k-v1.0-full"
+}

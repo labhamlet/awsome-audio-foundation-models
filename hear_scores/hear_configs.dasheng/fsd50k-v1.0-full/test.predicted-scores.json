@@ -1,0 +1,31 @@
+{
+    "test": {
+        "test_loss": 0.060497500002384186,
+        "test_score": 0.5124997496604919,
+        "test_mAP": 0.5124997496604919,
+        "test_d_prime": 2.2927519207802045,
+        "test_aucroc": 0.932971715927124,
+        "test_top1_acc": 0.300263911485672,
+        "validation_score": 0.5378451943397522,
+        "epoch": 56,
+        "time_in_min": 1.4013412912686667
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 2,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x154a00cd9080>",
+        "lr": 0.00032,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/DashengEmbeddingsHear/hear_configs.dasheng-model-size=base/fsd50k-v1.0-full"
+}

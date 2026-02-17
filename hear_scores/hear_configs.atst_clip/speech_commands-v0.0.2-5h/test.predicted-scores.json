@@ -1,0 +1,28 @@
+{
+    "test": {
+        "test_loss": 0.30815309286117554,
+        "test_score": 0.9321063160896301,
+        "test_top1_acc": 0.9321063160896301,
+        "validation_score": 0.9624999761581421,
+        "epoch": 191,
+        "time_in_min": 2.440511171023051
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 1,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x148f80440310>",
+        "lr": 0.001,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/ATSTClipEmbeddingsHear/hear_configs.atst_clip-model-size=base/speech_commands-v0.0.2-5h"
+}
