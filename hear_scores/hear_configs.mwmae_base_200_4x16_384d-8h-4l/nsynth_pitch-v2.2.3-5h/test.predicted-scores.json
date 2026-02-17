@@ -1,0 +1,29 @@
+{
+    "test": {
+        "test_loss": 1.4263355731964111,
+        "test_score": 0.6899999976158142,
+        "test_pitch_acc": 0.6899999976158142,
+        "test_chroma_acc": 0.7279999852180481,
+        "validation_score": 0.7300000190734863,
+        "epoch": 47,
+        "time_in_min": 0.1383241057395935
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 1,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x14ef615c6dc0>",
+        "lr": 0.001,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/MWMAEEmbeddingsHEAR/hear_configs.mwmae_base_200_4x16_384d-8h-4l/nsynth_pitch-v2.2.3-5h"
+}

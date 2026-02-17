@@ -1,9 +1,10 @@
-import glob 
 import os 
 import json 
 import pandas as pd
+import numpy as np
 
-# 1. Setup Data and Mappings
+# --- 1. CONFIGURATION ---
+
 no_folds = [
     "speech_commands-v0.0.2-5h",
     "dcase2016_task2-hear2021-full",
@@ -11,7 +12,12 @@ no_folds = [
     "fsd50k-v1.0-full",
 ]
 
-# Updated mapping to include WavJEPA and fix WavLM Large to "Mix"
+spectrogram_models = [
+    "atst_clip",
+    "dasheng",
+    "atst_frame"
+]
+
 model_name_mapping = {
     "data2vec_base": ["Data2Vec", "B", "LS", "960"],
     "data2vec_large": ["Data2Vec", "L", "LS", "960"],
@@ -25,8 +31,11 @@ model_name_mapping = {
     "wav2vec2_as_large": ["Wav2Vec2.0", "L", "AS", "4.3k"],
     "hubert_as_base": ["HuBERT", "B", "AS", "4.3k"],
     "hubert_as_large": ["HuBERT", "L", "AS", "4.3k"],
-    "wavjepa_base": ["WavJEPA", "B", "LS", "960"],
-    "wavjepa_as_base": ["WavJEPA", "B", "AS", "4.7k"],
+    "wavjepa_base": ["WavJEPA", "B", "LS", "960"], 
+    "wavjepa_as": ["WavJEPA", "B", "AS", "4.7k"],
+    "atst_clip": ["ATST-Clip", "B", "AS", "5.3k"],
+    "dasheng" : ["Dasheng", "B", "Mix", "272k"],
+    "atst_frame" : ["ATST-Frame", "B", "AS", "5.3k"]
 }
 
 data_name_mapping = {
@@ -43,14 +52,13 @@ data_name_mapping = {
     "vox_lingua_top10-hear2021-full": "VL"
 }
 
-# The target order for the DataFrame columns
 column_names = ["Model", "Size", "Data", "Data in hours",
                 "DCASE", "FSD50K", "LC", "ESC-50",
                 "CD", "VL", "SC-5",
                 "NS", "BO", "Mri-S", "Mri-T"]
 
-# The exact target order for the rows (as tuples of Model, Size, Data, Hours)
-row_order = [
+# Define the exact sort order requested
+sort_order = [
     ("Wav2Vec2.0", "B", "LS", "960"),
     ("HuBERT", "B", "LS", "960"),
     ("WavLM", "B", "LS", "960"),
@@ -64,79 +72,116 @@ row_order = [
     ("HuBERT", "B", "AS", "4.3k"),
     ("WavJEPA", "B", "AS", "4.7k"),
     ("Wav2Vec2.0", "L", "AS", "4.3k"),
-    ("HuBERT", "L", "AS", "4.3k")
+    ("HuBERT", "L", "AS", "4.3k"),
+    ("Dasheng", "B", "Mix", "272k"),
+    ("ATST-Clip", "B", "AS", "5.3k"),
+    ("ATST-Frame", "B", "AS", "5.3k")
 ]
 
-# 2. Helper Function
+# --- 2. DATA LOADING ---
+
 def load_data(json_path):
     with open(json_path, "r") as f:
         data = json.load(f)
-    
-    # Safely get the dataset name from the path (cross-platform compatible)
-    dataset_name = os.path.basename(os.path.dirname(json_path))
-    
-    if dataset_name in no_folds: 
+    if json_path.split("/")[-2] in no_folds: 
         return str(round(data["test"]["test_score"] * 100, 1))
     else:
-        return str(round(data["aggregated_scores"]["test_score_mean"] * 100, 1)) + " \pm " + str(
+        return str(round(data["aggregated_scores"]["test_score_mean"] * 100, 1)) + r" \pm " + str(
             round(data["aggregated_scores"]["test_score_std"] * 100, 1)
         )
 
-# 3. Build the Data
 rows = []
-
 if os.path.exists("hear_scores"):
     for path in os.listdir("hear_scores"):
         model_key = path.split(".")[-1]
-        
         if model_key in model_name_mapping:
             model_info = model_name_mapping[model_key]
-            
             row_data = {
                 "Model": model_info[0],
                 "Size": model_info[1],
                 "Data": model_info[2],
                 "Data in hours": model_info[3]
             }
+            
+            # Helper to calculate row average
+            scores_for_avg = []
 
             model_path = os.path.join("hear_scores", path)
-            if os.path.isdir(model_path):
-                for dir_name in os.listdir(model_path):
-                    if dir_name in data_name_mapping:
-                        json_file = os.path.join(model_path, dir_name, "test.predicted-scores.json")
-                        try:
-                            score_str = load_data(json_file)
-                            column_header = data_name_mapping[dir_name]
-                            row_data[column_header] = score_str
-                        except FileNotFoundError as e:
-                            pass # File missing, will become NaN in pandas
-                        except KeyError as e:
-                            pass # JSON structured differently
+            for dir_name in os.listdir(model_path):
+                if dir_name in data_name_mapping:
+                    json_file = os.path.join(model_path, dir_name, "test.predicted-scores.json")
+                    try:
+                        score_str = load_data(json_file)
+                        col = data_name_mapping[dir_name]
+                        row_data[col] = score_str
+                        
+                        # Extract numeric value for average calculation
+                        # Takes "60.4" from "60.4 \pm 1.2"
+                        val = float(score_str.split(" ")[0])
+                        scores_for_avg.append(val)
+                    except Exception:
+                        pass
+            
+            if scores_for_avg:
+                row_data["avg"] = f"{np.mean(scores_for_avg):.1f}"
+            else:
+                row_data["avg"] = "-"
 
             rows.append(row_data)
 
-# 4. Create Pandas DataFrame
 df = pd.DataFrame(rows)
 
-# 5. Arrange Columns
-df = df.reindex(columns=column_names)
+# Fill missing columns with hyphen
+for col in column_names:
+    if col not in df.columns:
+        df[col] = "-"
+if "avg" not in df.columns:
+    df["avg"] = "-"
 
-# 6. Apply Custom Row Sorting
-if not df.empty:
-    # Create a temporary rank column for sorting based on the row_order list
-    def get_sort_rank(row):
-        model_tuple = (row['Model'], row['Size'], row['Data'], row['Data in hours'])
-        try:
-            return row_order.index(model_tuple)
-        except ValueError:
-            return 999  # Put any unlisted models at the bottom
+# --- 3. SORTING ---
 
-    df['SortRank'] = df.apply(get_sort_rank, axis=1)
+# Create a temporary column for sorting index
+def get_sort_index(row):
+    key = (row["Model"], row["Size"], row["Data"], row["Data in hours"])
+    return sort_order.index(key)
+
+df["_sort_id"] = df.apply(get_sort_index, axis=1)
+df = df.sort_values("_sort_id").drop("_sort_id", axis=1)
+
+# --- 4. LATEX GENERATION ---
+
+score_columns = ["DCASE", "FSD50K", "LC", "ESC-50", "CD", "VL", "SC-5", "NS", "BO", "Mri-S", "Mri-T", "avg"]
+
+# Extract the display names for the spectrogram models from the mapping dictionary
+spectro_display_names = [model_name_mapping[k][0] for k in spectrogram_models]
+
+# Iterate over dataframe to print rows
+for idx, row in df.iterrows():
     
-    # Sort and remove the temporary column
-    df = df.sort_values(by='SortRank').drop(columns=['SortRank']).reset_index(drop=True)
-
-# Replace missing values (NaN) with an empty string or "-" for cleaner viewing
-df = df.fillna("-")
-
-print(df)
+    # Check if current model is one of the spectrogram models
+    is_spectro = row["Model"] in spectro_display_names
+    c_tag = r"\color{gray} " if is_spectro else ""
+    
+    line_items = []
+    
+    # Metadata columns
+    line_items.extend([
+        f"{c_tag}{row['Model']}", 
+        f"{c_tag}{row['Size']}", 
+        f"{c_tag}{row['Data']}", 
+        f"{c_tag}{row['Data in hours']}"
+    ])
+    
+    # Score columns
+    for col in score_columns:
+        val = str(row[col])
+        if r"\pm" in val:
+            # Wrap in math mode if it has standard deviation
+            line_items.append(f"{c_tag}$ {val} $")
+        else:
+            line_items.append(f"{c_tag}{val}")
+            
+    # Join with separator
+    latex_row = " & ".join(line_items) + r" \\"
+    
+    print(latex_row)

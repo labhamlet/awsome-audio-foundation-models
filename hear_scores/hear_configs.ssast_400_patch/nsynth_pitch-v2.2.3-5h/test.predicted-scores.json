@@ -1,0 +1,29 @@
+{
+    "test": {
+        "test_loss": 1.9834321737289429,
+        "test_score": 0.6200000047683716,
+        "test_pitch_acc": 0.6200000047683716,
+        "test_chroma_acc": 0.6759999990463257,
+        "validation_score": 0.6919999718666077,
+        "epoch": 176,
+        "time_in_min": 0.2381601095199585
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 2,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x145ce19a4dc0>",
+        "lr": 0.00032,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/SSASTEmbeddingsHEAR/hear_configs.ssast_400_patch/nsynth_pitch-v2.2.3-5h"
+}
