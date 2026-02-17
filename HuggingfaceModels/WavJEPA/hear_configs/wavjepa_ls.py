@@ -1,8 +1,8 @@
 from hear_api.runtime import RuntimeWavJEPA
 
 def load_model(*args, **kwargs):
-    model_size = kwargs.get("model_size", "base")
-    model = RuntimeWavJEPA(model_size=model_size, data = "audioset")
+    model_size = "base"
+    model = RuntimeWavJEPA(model_size=model_size, data = "librispeech")
     return model
 
 def get_scene_embeddings(audio, model):

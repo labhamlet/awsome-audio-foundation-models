@@ -7,17 +7,22 @@ from transformers import AutoModel, AutoFeatureExtractor
 class RuntimeWavJEPA(torch.nn.Module):
     def __init__(self, 
                  model_size, 
+                 data,
                  **kwargs) -> None:
         super().__init__()
 
-        if model_size == "base":
+        if model_size == "base" and data == "audioset":
             self.model = AutoModel.from_pretrained("labhamlet/wavjepa-base", trust_remote_code = True)
-            # sample rate and embedding sizes are required model attributes for the HEAR API
             self.embedding_size = 768
             self.scene_embedding_size = self.embedding_size
             self.timestamp_embedding_size = self.embedding_size
             self.extractor = AutoFeatureExtractor.from_pretrained("labhamlet/wavjepa-base", trust_remote_code = True)
-
+        elif model_size == "base" and data == "librispeech":
+            self.model = AutoModel.from_pretrained("labhamlet/wavjepa-base-ls", trust_remote_code = True)
+            self.embedding_size = 768
+            self.scene_embedding_size = self.embedding_size
+            self.timestamp_embedding_size = self.embedding_size
+            self.extractor = AutoFeatureExtractor.from_pretrained("labhamlet/wavjepa-base-ls", trust_remote_code = True)
         else: 
             raise Exception("Wrong model size")
 
