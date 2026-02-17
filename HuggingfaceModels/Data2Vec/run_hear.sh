@@ -7,7 +7,7 @@
 #SBATCH --exclude=gcn118
 #SBATCH --time=02:00:00
 #SBATCH --output=hear/slurm_output_%A_%a.out
-#SBATCH --array=1-2
+#SBATCH --array=0-10
 
 grids=(
 default

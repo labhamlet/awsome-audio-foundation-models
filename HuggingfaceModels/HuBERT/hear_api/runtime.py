@@ -58,7 +58,7 @@ class RuntimeHuBERT(torch.nn.Module):
 
         embeddings = embeddings.last_hidden_state
         # Length of the audio in MS
-        ts = get_timestamps(self.sample_rate, audio.shape[0], audio.shape[-1], embeddings)
+        ts = get_timestamps(self.sample_rate, audio.shape[0], max(audio.shape), embeddings)
         assert ts.shape[-1] == embeddings.shape[1]
         return embeddings, ts 
 

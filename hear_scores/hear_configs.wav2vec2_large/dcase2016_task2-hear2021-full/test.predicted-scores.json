@@ -1,0 +1,42 @@
+{
+    "test": {
+        "test_loss": 0.09919096529483795,
+        "test_score": 0.6599776744842529,
+        "test_event_onset_200ms_fms": 0.6599776744842529,
+        "test_event_onset_200ms_fms_f_measure": 0.6599776744842529,
+        "test_event_onset_200ms_fms_precision": 0.698113203048706,
+        "test_event_onset_200ms_fms_recall": 0.6257928013801575,
+        "test_segment_1s_er": 0.3056768476963043,
+        "test_segment_1s_er_error_rate": 0.3056768476963043,
+        "validation_score": 0.6696628928184509,
+        "epoch": 39,
+        "time_in_min": 3.7808034936587016
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 10,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 2,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x150e4b391430>",
+        "lr": 0.0032,
+        "max_epochs": 50,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [
+        [
+            "median_filter_ms",
+            250
+        ],
+        [
+            "min_duration",
+            125
+        ]
+    ],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/Wav2Vec2EmbeddingsHear/hear_configs.wav2vec2_large/dcase2016_task2-hear2021-full"
+}

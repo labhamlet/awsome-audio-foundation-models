@@ -1,0 +1,31 @@
+{
+    "test": {
+        "test_loss": 0.06298594176769257,
+        "test_score": 0.4782294179162618,
+        "test_mAP": 0.4782294179162618,
+        "test_d_prime": 2.1797780247920375,
+        "test_aucroc": 0.922937105397229,
+        "test_top1_acc": 0.2859935462474823,
+        "validation_score": 0.508164277700188,
+        "epoch": 53,
+        "time_in_min": 1.5985320727030436
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 2,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_uniform_ at 0x14f5f9014430>",
+        "lr": 0.00032,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/Wav2Vec2ASEmbeddingsHear/hear_configs.wav2vec2_as_large/fsd50k-v1.0-full"
+}

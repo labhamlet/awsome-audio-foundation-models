@@ -1,0 +1,28 @@
+{
+    "test": {
+        "test_loss": 0.41665253043174744,
+        "test_score": 0.8607361912727356,
+        "test_top1_acc": 0.8607361912727356,
+        "validation_score": 0.9440000057220459,
+        "epoch": 35,
+        "time_in_min": 0.362129807472229
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 1,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x14aa85366430>",
+        "lr": 0.0001,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/Data2VecEmbeddingsHear/hear_configs.data2vec_large/speech_commands-v0.0.2-5h"
+}

@@ -1,0 +1,31 @@
+{
+    "test": {
+        "test_loss": 0.10523179918527603,
+        "test_score": 0.18708060209301067,
+        "test_mAP": 0.18708060209301067,
+        "test_d_prime": 1.3520903891110116,
+        "test_aucroc": 0.8194271546889731,
+        "test_top1_acc": 0.14084644615650177,
+        "validation_score": 0.20618282030020152,
+        "epoch": 290,
+        "time_in_min": 4.686869108676911
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 1,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x15072fe0c4c0>",
+        "lr": 0.0001,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/Data2VecEmbeddingsHear/hear_configs.data2vec_large/fsd50k-v1.0-full"
+}

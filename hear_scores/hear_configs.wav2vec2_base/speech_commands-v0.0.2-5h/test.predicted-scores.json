@@ -1,0 +1,28 @@
+{
+    "test": {
+        "test_loss": 0.8427672386169434,
+        "test_score": 0.8558282256126404,
+        "test_top1_acc": 0.8558282256126404,
+        "validation_score": 0.9334999918937683,
+        "epoch": 179,
+        "time_in_min": 0.8545539339383443
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 1,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x152e4ddae430>",
+        "lr": 0.001,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/Wav2Vec2EmbeddingsHear/hear_configs.wav2vec2_base/speech_commands-v0.0.2-5h"
+}

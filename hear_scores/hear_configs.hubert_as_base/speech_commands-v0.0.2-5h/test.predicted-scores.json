@@ -1,0 +1,28 @@
+{
+    "test": {
+        "test_loss": 0.9369048476219177,
+        "test_score": 0.8345603346824646,
+        "test_top1_acc": 0.8345603346824646,
+        "validation_score": 0.9210000038146973,
+        "epoch": 338,
+        "time_in_min": 1.4088640570640565
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 1,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x1491195a1430>",
+        "lr": 0.001,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/HuBERTASEmbeddingsHear/hear_configs.hubert_as_base/speech_commands-v0.0.2-5h"
+}

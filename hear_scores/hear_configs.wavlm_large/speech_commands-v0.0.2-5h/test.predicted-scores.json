@@ -1,0 +1,28 @@
+{
+    "test": {
+        "test_loss": 0.25310683250427246,
+        "test_score": 0.9378322958946228,
+        "test_top1_acc": 0.9378322958946228,
+        "validation_score": 0.9750000238418579,
+        "epoch": 32,
+        "time_in_min": 0.3427203973134359
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 1,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x14bc79365550>",
+        "lr": 0.001,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/WavLMEmbeddingsHear/hear_configs.wavlm_large/speech_commands-v0.0.2-5h"
+}

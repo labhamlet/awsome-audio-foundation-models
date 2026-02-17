@@ -1,0 +1,31 @@
+{
+    "test": {
+        "test_loss": 0.0674324482679367,
+        "test_score": 0.3277591548578638,
+        "test_mAP": 0.3277591548578638,
+        "test_d_prime": 1.8197150956079868,
+        "test_aucroc": 0.8882501240888615,
+        "test_top1_acc": 0.20701788365840912,
+        "validation_score": 0.3498432762840727,
+        "epoch": 44,
+        "time_in_min": 1.4560913562774658
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 2,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_uniform_ at 0x14db41cee4c0>",
+        "lr": 0.00032,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/HuBERTEmbeddingsHear/hear_configs.hubert_base/fsd50k-v1.0-full"
+}

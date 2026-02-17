@@ -3,7 +3,6 @@
 #SBATCH --gpus=1
 #SBATCH --job-name=Wav2Vec2AS
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=18
 #SBATCH --exclude=gcn118
 #SBATCH --time=02:00:00
 #SBATCH --output=hear/slurm_output_%A_%a.out
@@ -63,7 +62,7 @@ task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
 task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}
 grid=${grids[$SLURM_ARRAY_TASK_ID]}
 
-model_name=hear_configs.hubert_as_base
+model_name=hear_configs.wav2vec2_as_base
 
 python3 -m heareval.embeddings.runner "$model_name" --tasks-dir $task_dir --task "$task_name" --embeddings-dir $embeddings_dir
 python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name --grid $grid

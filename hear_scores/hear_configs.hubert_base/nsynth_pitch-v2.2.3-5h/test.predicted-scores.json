@@ -1,0 +1,29 @@
+{
+    "test": {
+        "test_loss": 5.228126525878906,
+        "test_score": 0.1979999989271164,
+        "test_pitch_acc": 0.1979999989271164,
+        "test_chroma_acc": 0.2199999988079071,
+        "validation_score": 0.23999999463558197,
+        "epoch": 74,
+        "time_in_min": 0.16273096005121868
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 2,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x14f79f20f550>",
+        "lr": 0.0032,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/HuBERTEmbeddingsHear/hear_configs.hubert_base/nsynth_pitch-v2.2.3-5h"
+}

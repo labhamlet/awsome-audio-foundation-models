@@ -1,0 +1,42 @@
+{
+    "test": {
+        "test_loss": 0.03809625282883644,
+        "test_score": 0.8326271176338196,
+        "test_event_onset_200ms_fms": 0.8326271176338196,
+        "test_event_onset_200ms_fms_f_measure": 0.8326271176338196,
+        "test_event_onset_200ms_fms_precision": 0.8343949317932129,
+        "test_event_onset_200ms_fms_recall": 0.830866813659668,
+        "test_segment_1s_er": 0.1517467200756073,
+        "test_segment_1s_er_error_rate": 0.1517467200756073,
+        "validation_score": 0.8618420958518982,
+        "epoch": 39,
+        "time_in_min": 2.8243298172950744
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 10,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 2,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x14c32e299430>",
+        "lr": 0.0032,
+        "max_epochs": 50,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [
+        [
+            "median_filter_ms",
+            250
+        ],
+        [
+            "min_duration",
+            125
+        ]
+    ],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/HuBERTASEmbeddingsHear/hear_configs.hubert_as_large/dcase2016_task2-hear2021-full"
+}
