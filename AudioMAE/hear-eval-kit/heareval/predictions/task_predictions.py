@@ -49,6 +49,10 @@ from heareval.score import (
     validate_score_return_type,
 )
 
+#For the softmax deprication
+import warnings
+warnings.filterwarnings("ignore")
+
 TASK_SPECIFIC_PARAM_GRID = {
     "dcase2016_task2": {
         # sed_eval is very slow

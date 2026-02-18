@@ -1,6 +1,7 @@
 from hear_api.runtime import RuntimeMAE
+import os 
 
-MODEL_PATH = "/home/gyuksel3/phd/hear-freq-models/AudioMAE/pretrained.pth"
+MODEL_PATH = os.environ["MODEL_PATH"]
 
 
 def load_model(*args):

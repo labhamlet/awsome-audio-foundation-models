@@ -6,18 +6,46 @@
 #SBATCH --cpus-per-task=18
 #SBATCH --exclude=gcn118
 #SBATCH --time=00:20:00
-#SBATCH --output=slurm_output_%A_%a.out
-#SBATCH --array=0
+#SBATCH --output=hear/slurm_output_%A_%a.out
+#SBATCH --array=0-9
 
-cd ~/phd/hear-freq-models/AudioMAE
+
+export CUBLAS_WORKSPACE_CONFIG=:4096:8
+export MODEL_PATH="/home/gyuksel3/phd/awsome-audio-foundation-models/AudioMAE/pretrained.pth"
+
+cd ~/phd/awsome-audio-foundation-models/AudioMAE
 source env/bin/activate
-cd listen-eval-kit
+cd hear-eval-kit
 
+grids=(
+default
+default
+default
+default
+default
+default
+default
+default
+default
+default
+)
 
-SLURM_ARRAY_TASK_ID=2
-task_names=(fsd50k-v1.0-full
-dcase2016_task2-hear2021-full
+task_dirs=(
+/projects/0/prjs1338/tasks
+/projects/0/prjs1261/tasks
+/projects/0/prjs1338/tasks
+/projects/0/prjs1338/tasks
+/projects/0/prjs1338/tasks
+/projects/0/prjs1338/tasks
+/projects/0/prjs1338/tasks
+/projects/0/prjs1338/tasks
+/projects/0/prjs1338/tasks
+/projects/0/prjs1338/tasks
+)
+
+task_names=(
 beijing_opera-v1.0-hear2021-full
+fsd50k-v1.0-full
 esc50-v2.0.0-full
 libricount-v1.0.0-hear2021-full
 speech_commands-v0.0.2-5h
@@ -27,37 +55,20 @@ tfds_crema_d-1.0.0-full
 nsynth_pitch-v2.2.3-5h
 vox_lingua_top10-hear2021-full
 )
-tasks_dirs=(
-/projects/0/prjs1261/tasks_noisy_ambisonics
-/projects/0/prjs1261/tasks_noisy_ambisonics
-/projects/0/prjs1338/tasks_noisy_ambisonics
-/projects/0/prjs1338/tasks_noisy_ambisonics
-/projects/0/prjs1338/tasks_noisy_ambisonics
-/projects/0/prjs1338/tasks_noisy_ambisonics
-/projects/0/prjs1338/tasks_noisy_ambisonics
-/projects/0/prjs1338/tasks_noisy_ambisonics
-/projects/0/prjs1338/tasks_noisy_ambisonics
-/projects/0/prjs1338/tasks_noisy_ambisonics
-/projects/0/prjs1338/tasks_noisy_ambisonics
-)
 
+embeddings_dir=/projects/0/prjs1338/AudioMAEEmbeddingsHear
+score_dir=hear_scores
 task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
+task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}
 grid=${grids[$SLURM_ARRAY_TASK_ID]}
-tasks_dir=${tasks_dirs[$SLURM_ARRAY_TASK_ID]}
 
-
-embeddings_dir=/projects/0/prjs1338/BaselineEmbeddings
-score_dir=hear_scores_baseline
 model_name=hear_configs.MAE
 
+python3 -m heareval.embeddings.runner "$model_name" --tasks-dir $task_dir --task "$task_name" --embeddings-dir $embeddings_dir
+python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name --grid $grid
 
-python3 -m heareval.embeddings.runner "$model_name" --tasks-dir $tasks_dir --task "$task_name" --embeddings-dir $embeddings_dir
-python3 -m heareval.predictions.runner $embeddings_dir/$model_name/$task_name
+mkdir -p ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
 
-mkdir -p /projects/0/prjs1338/$score_dir/$model_name/$task_name
-
-mv $embeddings_dir/$model_name/$task_name/test.predicted-scores.json  /projects/0/prjs1338/$score_dir/$model_name/$task_name
-mv $embeddings_dir/$model_name/$task_name/*predictions.pkl /projects/0/prjs1338/$score_dir/$model_name/$task_name
-mv $embeddings_dir/$model_name/$task_name/*embeddings.npy /projects/0/prjs1338/$score_dir/$model_name/$task_name
+mv $embeddings_dir/$model_name/$task_name/test.predicted-scores.json ~/phd/awsome-audio-foundation-models/$score_dir/$model_name/$task_name
 
 rm -r -d -f $embeddings_dir/$model_name/$task_name
