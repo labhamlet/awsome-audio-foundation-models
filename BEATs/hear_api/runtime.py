@@ -4,7 +4,7 @@ import torch
 from .feature_helper import FeatureExtractor
 import torch
 from BEATs import BEATs, BEATsConfig
-
+import os 
 
 class RuntimeBEATs(torch.nn.Module):
     def __init__(self, 
@@ -12,7 +12,8 @@ class RuntimeBEATs(torch.nn.Module):
         super().__init__()
 
         # load the pre-trained checkpoints
-        checkpoint = torch.load('/home/gyuksel3/phd/hear-freq-models/BEATs/BEATs_iter3.pt')
+        checkpoint = torch.load(os.environ["MODEL_PATH"])
+
         cfg = BEATsConfig(checkpoint['cfg'])
         self.model = BEATs(cfg)
         self.model.load_state_dict(checkpoint['model'])

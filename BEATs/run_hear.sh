@@ -1,13 +1,14 @@
 #!/bin/bash
-#SBATCH --partition=gpu_h100
+#SBATCH --partition=gpu_a100
 #SBATCH --gpus=1
 #SBATCH --job-name=BEATs
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=18
 #SBATCH --exclude=gcn118
 #SBATCH --time=02:00:00
 #SBATCH --output=hear/slurm_output_%A_%a.out
 #SBATCH --array=0-9
+
+export MODEL_PATH=/home/gyuksel3/phd/hear-freq-models/BEATs/BEATs_iter3.pt
 
 grids=(
 default
@@ -54,7 +55,7 @@ module load Anaconda3/2023.07-2
 source activate beats-eval
 cd hear-eval-kit
 
-embeddings_dir=/projects/0/prjs1338/Wav2Vec2EmbeddingsHear
+embeddings_dir=/projects/0/prjs1338/BEATsEmbeddingsHear
 score_dir=hear_scores
 task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
 task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}

@@ -1,6 +1,7 @@
 from hear_api.runtime import RuntimeSSAST
+import os 
 
-MODEL_PATH = "/home/gyuksel3/phd/hear-freq-models/SSAST/pretrained_model/SSAST-Base-Frame-400.pth"
+MODEL_PATH = os.environ["MODEL_PATH"]
 
 
 def load_model(*args):

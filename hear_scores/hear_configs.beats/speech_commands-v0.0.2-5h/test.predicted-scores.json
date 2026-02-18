@@ -1,0 +1,28 @@
+{
+    "test": {
+        "test_loss": 0.7001606822013855,
+        "test_score": 0.8572596907615662,
+        "test_top1_acc": 0.8572596907615662,
+        "validation_score": 0.9309999942779541,
+        "epoch": 137,
+        "time_in_min": 0.7119128227233886
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 1,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x14653e20ce50>",
+        "lr": 0.001,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/0/prjs1338/BEATsEmbeddingsHear/hear_configs.beats/speech_commands-v0.0.2-5h"
+}

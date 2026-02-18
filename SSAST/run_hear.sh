@@ -9,6 +9,8 @@
 #SBATCH --output=hear/slurm_output_%A_%a.out
 #SBATCH --array=0-9
 
+export MODEL_PATH=/home/gyuksel3/phd/hear-freq-models/SSAST/pretrained_model/SSAST-Base-Patch-400.pth
+
 grids=(
 default
 default
