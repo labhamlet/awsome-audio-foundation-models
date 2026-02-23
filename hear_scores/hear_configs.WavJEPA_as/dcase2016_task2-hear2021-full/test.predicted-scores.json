@@ -1,0 +1,42 @@
+{
+    "test": {
+        "test_loss": 0.011852983385324478,
+        "test_score": 0.9402822852134705,
+        "test_event_onset_200ms_fms": 0.9402822852134705,
+        "test_event_onset_200ms_fms_f_measure": 0.9402822852134705,
+        "test_event_onset_200ms_fms_precision": 0.9665178656578064,
+        "test_event_onset_200ms_fms_recall": 0.915433406829834,
+        "test_segment_1s_er": 0.08515284210443497,
+        "test_segment_1s_er_error_rate": 0.08515284210443497,
+        "validation_score": 0.9681668281555176,
+        "epoch": 39,
+        "time_in_min": 4.846454151471456
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 10,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 1,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x153f17f02160>",
+        "lr": 0.0001,
+        "max_epochs": 50,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [
+        [
+            "median_filter_ms",
+            250
+        ],
+        [
+            "min_duration",
+            125
+        ]
+    ],
+    "score_mode": "max",
+    "embedding_path": "/projects/prjs1338/JepaEmbeddings/hear_configs.WavJEPA_as/dcase2016_task2-hear2021-full"
+}

@@ -1,0 +1,29 @@
+{
+    "test": {
+        "test_loss": 3.176945447921753,
+        "test_score": 0.3479999899864197,
+        "test_pitch_acc": 0.3479999899864197,
+        "test_chroma_acc": 0.3779999911785126,
+        "validation_score": 0.37400001287460327,
+        "epoch": 44,
+        "time_in_min": 0.08022197484970092
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 2,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_uniform_ at 0x153ae34aa0c0>",
+        "lr": 0.0032,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/prjs1338/JepaEmbeddings/hear_configs.WavJEPA_as/nsynth_pitch-v2.2.3-5h"
+}

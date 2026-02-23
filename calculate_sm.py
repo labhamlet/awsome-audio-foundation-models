@@ -3,7 +3,27 @@ import json
 import pandas as pd
 import numpy as np
 
-# --- 1. CONFIGURATION ---
+
+def sm(baseline, models):
+  sota = np.max(np.concatenate([baseline, models]), axis = 0)
+  s = (models - baseline) / ((sota - baseline) + 0.0001)
+  s[s < 0] = 0
+  return np.round(100 * s.mean(axis = 1),1)
+
+
+baseline = [
+    7.6,
+    12.5,
+    40.3,
+    27.4,
+    36.7,
+    16.0,
+    13.5,
+    89.2,
+    97.1,
+    94.2,
+    93.7
+]
 
 no_folds = [
     "speech_commands-v0.0.2-5h",
@@ -48,17 +68,17 @@ model_name_mapping = {
 }
 
 data_name_mapping = {
-    "beijing_opera-v1.0-hear2021-full" : "BO",
     "dcase2016_task2-hear2021-full" : "DCASE",
-    "esc50-v2.0.0-full" : "ESC-50",
     "fsd50k-v1.0-full" : "FSD50K",
     "libricount-v1.0.0-hear2021-full" : "LC",
+    "esc50-v2.0.0-full" : "ESC-50",
+    "tfds_crema_d-1.0.0-full" : "CD",
+    "vox_lingua_top10-hear2021-full": "VL",
+    "speech_commands-v0.0.2-5h" : "SC-5",
+    "nsynth_pitch-v2.2.3-5h" : "NS",
+    "beijing_opera-v1.0-hear2021-full" : "BO",
     "mridangam_stroke-v1.5-full" : "Mri-S",
     "mridangam_tonic-v1.5-full" : "Mri-T",
-    "nsynth_pitch-v2.2.3-5h" : "NS",
-    "speech_commands-v0.0.2-5h" : "SC-5",
-    "tfds_crema_d-1.0.0-full" : "CD",
-    "vox_lingua_top10-hear2021-full": "VL"
 }
 
 column_names = ["Model", "Size", "Data", "Data in hours",
@@ -92,8 +112,6 @@ sort_order = [
 
 ]
 
-# --- 2. DATA LOADING ---
-
 def load_data(json_path):
     with open(json_path, "r") as f:
         data = json.load(f)
@@ -103,7 +121,7 @@ def load_data(json_path):
         return str(round(data["aggregated_scores"]["test_score_mean"] * 100, 1)) + r" \pm " + str(
             round(data["aggregated_scores"]["test_score_std"] * 100, 1)
         )
-
+    
 rows = []
 if os.path.exists("hear_scores"):
     for path in os.listdir("hear_scores"):
@@ -119,6 +137,7 @@ if os.path.exists("hear_scores"):
             
             # Helper to calculate row average
             scores_for_avg = []
+            scores_for_sm = []
 
             model_path = os.path.join("hear_scores", path)
             for dir_name in os.listdir(model_path):
@@ -128,29 +147,21 @@ if os.path.exists("hear_scores"):
                         score_str = load_data(json_file)
                         col = data_name_mapping[dir_name]
                         row_data[col] = score_str
-                        
                         # Extract numeric value for average calculation
                         # Takes "60.4" from "60.4 \pm 1.2"
                         val = float(score_str.split(" ")[0])
                         scores_for_avg.append(val)
                     except Exception:
+                        #Some models do not have DCASE, append 0 for s(m)
                         pass
             
             if scores_for_avg:
                 row_data["avg"] = f"{np.mean(scores_for_avg):.1f}"
             else:
                 row_data["avg"] = "-"
-
             rows.append(row_data)
 
 df = pd.DataFrame(rows)
-
-# Fill missing columns with hyphen
-for col in column_names:
-    if col not in df.columns:
-        df[col] = "-"
-if "avg" not in df.columns:
-    df["avg"] = "-"
 
 # --- 3. SORTING ---
 
@@ -162,11 +173,21 @@ def get_sort_index(row):
 df["_sort_id"] = df.apply(get_sort_index, axis=1)
 df = df.sort_values("_sort_id").drop("_sort_id", axis=1)
 
+score_columns = ["Model", "DCASE", "FSD50K", "LC", "ESC-50", "CD", "VL", "SC-5", "NS", "BO", "Mri-S", "Mri-T"]
+df_s = df.reindex(columns=score_columns).to_numpy()
+df_s = df_s[:-7, 1:]
+scores = np.zeros((df_s.shape[0], df_s.shape[1]))
+for i, rows in enumerate(df_s):
+    for j, item in enumerate(rows): 
+        scores[i,j] = float(item.split(" ")[0])
+
+sms = np.concatenate([sm([baseline], scores), ["nan","nan","nan","nan","nan","nan","nan"]])
+df["s(m)"] = sms
+
 # --- 4. LATEX GENERATION ---
-
-score_columns = ["DCASE", "FSD50K", "LC", "ESC-50", "CD", "VL", "SC-5", "NS", "BO", "Mri-S", "Mri-T", "avg"]
-
 # Extract the display names for the spectrogram models from the mapping dictionary
+score_columns = ["DCASE", "FSD50K", "LC", "ESC-50", "CD", "VL", "SC-5", "NS", "BO", "Mri-S", "Mri-T", "avg", "s(m)"]
+
 spectro_display_names = [model_name_mapping[k][0] for k in spectrogram_models]
 
 # Iterate over dataframe to print rows

@@ -57,7 +57,7 @@ source activate ssast
 cd hear-eval-kit
 
 embeddings_dir=/projects/0/prjs1338/SSASTEmbeddingsHEAR
-score_dir=hear_scores
+score_dir=hear_scores_trial
 task_name=${task_names[$SLURM_ARRAY_TASK_ID]}
 task_dir=${task_dirs[$SLURM_ARRAY_TASK_ID]}
 grid=${grids[$SLURM_ARRAY_TASK_ID]}

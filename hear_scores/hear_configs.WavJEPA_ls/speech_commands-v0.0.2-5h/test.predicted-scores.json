@@ -1,0 +1,28 @@
+{
+    "test": {
+        "test_loss": 0.18150068819522858,
+        "test_score": 0.94539874792099,
+        "test_top1_acc": 0.94539874792099,
+        "validation_score": 0.9674999713897705,
+        "epoch": 23,
+        "time_in_min": 0.21541734139124552
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 1,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x1534bdd12160>",
+        "lr": 0.00032,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/prjs1338/JepaLSEmbeddings/hear_configs.WavJEPA_ls/speech_commands-v0.0.2-5h"
+}

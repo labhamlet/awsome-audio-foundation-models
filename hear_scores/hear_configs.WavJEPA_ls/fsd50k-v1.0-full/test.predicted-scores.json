@@ -1,0 +1,31 @@
+{
+    "test": {
+        "test_loss": 0.07067988812923431,
+        "test_score": 0.41881971936996065,
+        "test_mAP": 0.41881971936996065,
+        "test_d_prime": 2.0556279261276855,
+        "test_aucroc": 0.9125569838404307,
+        "test_top1_acc": 0.23604731261730194,
+        "validation_score": 0.447633270381866,
+        "epoch": 83,
+        "time_in_min": 1.283284342288971
+    },
+    "hparams": {
+        "batch_size": 1024,
+        "check_val_every_n_epoch": 3,
+        "dropout": 0.1,
+        "embedding_norm": "<class 'torch.nn.modules.linear.Identity'>",
+        "hidden_dim": 1024,
+        "hidden_layers": 2,
+        "hidden_norm": "<class 'torch.nn.modules.batchnorm.BatchNorm1d'>",
+        "initialization": "<function xavier_normal_ at 0x14e07d74e160>",
+        "lr": 0.00032,
+        "max_epochs": 500,
+        "norm_after_activation": false,
+        "optim": "<class 'torch.optim.adam.Adam'>",
+        "patience": 20
+    },
+    "postprocessing": [],
+    "score_mode": "max",
+    "embedding_path": "/projects/prjs1338/JepaLSEmbeddings/hear_configs.WavJEPA_ls/fsd50k-v1.0-full"
+}
